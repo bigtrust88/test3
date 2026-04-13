@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { Canvas } from 'skia-canvas';
+// import { Canvas } from 'skia-canvas';
 // @ts-ignore
-import { registerFont } from 'skia-canvas';
+// import { registerFont } from 'skia-canvas';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -110,7 +110,7 @@ export class ThumbnailService {
    * 배경 그리기 (시간대별 테마)
    */
   private drawBackground(
-    ctx: CanvasRenderingContext2D,
+    ctx: any,
     sentiment: string,
     trigger_type: string,
   ) {
@@ -171,7 +171,7 @@ export class ThumbnailService {
   /**
    * 로고 그리기 (우상단)
    */
-  private drawLogo(ctx: CanvasRenderingContext2D, trigger_type: string) {
+  private drawLogo(ctx: any, trigger_type: string) {
     const icons = {
       morning: '🌅',
       afternoon: '📊',
@@ -197,7 +197,7 @@ export class ThumbnailService {
    * 카테고리 Badge 그리기
    */
   private drawBadge(
-    ctx: CanvasRenderingContext2D,
+    ctx: any,
     category_slug: string,
     trigger_type: string,
   ) {
@@ -238,7 +238,7 @@ export class ThumbnailService {
   /**
    * 메인 제목 그리기
    */
-  private drawHeadline(ctx: CanvasRenderingContext2D, headline: string) {
+  private drawHeadline(ctx: any, headline: string) {
     ctx.font = 'bold 56px Pretendard, Arial';
     ctx.fillStyle = '#FFFFFF';
     ctx.textAlign = 'left';
@@ -257,7 +257,7 @@ export class ThumbnailService {
   /**
    * 서브텍스트 그리기
    */
-  private drawSubtext(ctx: CanvasRenderingContext2D, subtext: string) {
+  private drawSubtext(ctx: any, subtext: string) {
     ctx.font = '400 32px Pretendard, Arial';
     ctx.fillStyle = '#94A3B8';
     ctx.textAlign = 'left';
@@ -274,7 +274,7 @@ export class ThumbnailService {
   /**
    * 하단 구분선
    */
-  private drawDivider(ctx: CanvasRenderingContext2D) {
+  private drawDivider(ctx: any) {
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -286,7 +286,7 @@ export class ThumbnailService {
   /**
    * 태그 + 날짜 그리기
    */
-  private drawFooter(ctx: CanvasRenderingContext2D, tags: string[]) {
+  private drawFooter(ctx: any, tags: string[]) {
     const footerY = this.CANVAS_HEIGHT - 48;
 
     // 태그 (좌측)
@@ -314,7 +314,7 @@ export class ThumbnailService {
    * 텍스트 래핑
    */
   private wrapText(
-    ctx: CanvasRenderingContext2D,
+    ctx: any,
     text: string,
     maxWidth: number,
   ): string[] {
@@ -345,7 +345,7 @@ export class ThumbnailService {
    * 둥근 사각형 그리기
    */
   private roundRect(
-    ctx: CanvasRenderingContext2D,
+    ctx: any,
     x: number,
     y: number,
     width: number,
