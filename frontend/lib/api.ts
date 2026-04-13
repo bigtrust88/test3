@@ -177,20 +177,21 @@ export async function deletePost(id: string): Promise<void> {
 }
 
 // ============================================
-// Market Data API (Alpha Vantage)
+// Market Data API (Yahoo Finance - Unofficial)
 // ============================================
 
-const ALPHA_VANTAGE_API_KEY = process.env.NEXT_PUBLIC_ALPHA_VANTAGE_API_KEY;
-const ALPHA_VANTAGE_URL = 'https://www.alphavantage.co/query';
+const YAHOO_FINANCE_URL = 'https://query1.finance.yahoo.com/v7/finance/quote';
 const CACHE_KEY = 'market_stocks_cache';
-const CACHE_DURATION = 60 * 60 * 1000; // 1시간
+const CACHE_DURATION = 5 * 60 * 1000; // 5분
 
-interface AlphaVantageQuote {
-  'Global Quote': {
-    '01. symbol': string;
-    '05. price': string;
-    '09. change': string;
-    '10. change percent': string;
+interface YahooQuoteResponse {
+  quoteResponse: {
+    result: {
+      symbol: string;
+      regularMarketPrice: number;
+      regularMarketChange: number;
+      regularMarketChangePercent: number;
+    }[];
   };
 }
 
@@ -199,20 +200,7 @@ interface CachedData {
   timestamp: number;
 }
 
-/**
- * Alpha Vantage는 5 calls/min 제한이 있으므로
- * 순차 호출 + 딜레이 사용
- */
-async function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function getMarketIndices(): Promise<MarketIndex[]> {
-  if (!ALPHA_VANTAGE_API_KEY) {
-    console.warn('ALPHA_VANTAGE_API_KEY not set');
-    return [];
-  }
-
   // 캐시 확인
   if (typeof window !== 'undefined') {
     const cached = localStorage.getItem(CACHE_KEY);
@@ -221,115 +209,105 @@ export async function getMarketIndices(): Promise<MarketIndex[]> {
         const cachedData: CachedData = JSON.parse(cached);
         const isExpired = Date.now() - cachedData.timestamp > CACHE_DURATION;
 
-        // 캐시된 데이터가 유효한 항목을 가지고 있는지 확인
-        if (!isExpired && cachedData.data && cachedData.data.length > 0 && cachedData.data[0].price > 0) {
-          console.log('[Market] Using cached data (expires in', Math.round((CACHE_DURATION - (Date.now() - cachedData.timestamp)) / 1000), 's)');
+        if (!isExpired && cachedData.data && cachedData.data.length > 0) {
+          console.log(
+            `[Market] Using cached data (expires in ${Math.round((CACHE_DURATION - (Date.now() - cachedData.timestamp)) / 1000)}s)`,
+          );
           return cachedData.data;
-        } else {
-          console.log('[Market] Cache expired or invalid, fetching fresh data...');
-          localStorage.removeItem(CACHE_KEY);
         }
       } catch (e) {
-        console.log('[Market] Cache parsing error, clearing cache');
+        console.log('[Market] Cache error, clearing');
         localStorage.removeItem(CACHE_KEY);
       }
     }
   }
 
-  const indices = [
+  const stocks = [
     { symbol: 'AAPL', name: 'Apple', emoji: '🍎' },
     { symbol: 'MSFT', name: 'Microsoft', emoji: '💻' },
     { symbol: 'TSLA', name: 'Tesla', emoji: '⚡' },
     { symbol: 'NVDA', name: 'NVIDIA', emoji: '🎮' },
   ];
 
-  const results: MarketIndex[] = [];
-
   try {
-    // 순차 호출: Rate limit (5 calls/min) 고려
-    for (const index of indices) {
-      try {
-        const url = new URL(ALPHA_VANTAGE_URL);
-        url.searchParams.append('function', 'GLOBAL_QUOTE');
-        url.searchParams.append('symbol', index.symbol);
-        url.searchParams.append('apikey', ALPHA_VANTAGE_API_KEY);
+    // 한 번에 모든 심볼 조회 (배치 요청)
+    const symbols = stocks.map((s) => s.symbol).join(',');
+    const url = new URL(YAHOO_FINANCE_URL);
+    url.searchParams.append('symbols', symbols);
 
-        console.log(`[Market] Fetching ${index.symbol} from: ${url.toString()}`);
+    console.log(`[Market] Fetching from Yahoo Finance: ${symbols}`);
 
-        const response = await fetch(url.toString());
-        console.log(`[Market] Response status for ${index.symbol}: ${response.status}`);
+    const response = await fetch(url.toString());
 
-        const data: any = await response.json();
-        console.log(`[Market] Response data for ${index.symbol}:`, JSON.stringify(data));
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
 
-        if (!data['Global Quote'] || Object.keys(data['Global Quote']).length === 0) {
-          console.error(
-            `Alpha Vantage API error for ${index.symbol}: No Global Quote data`,
-            data,
-          );
-          results.push({
-            symbol: index.symbol,
-            name: index.name,
-            emoji: index.emoji,
-            price: 0,
-            change: 0,
-            changePercent: 0,
-            timestamp: 0,
-          });
-        } else {
-          const quote = data['Global Quote'];
-          const price = parseFloat(quote['05. price']) || 0;
-          const change = parseFloat(quote['09. change']) || 0;
-          const changePercentStr = quote['10. change percent']
-            .replace('%', '')
-            .trim();
-          const changePercent = parseFloat(changePercentStr) || 0;
+    const data: YahooQuoteResponse = await response.json();
 
-          results.push({
-            symbol: index.symbol,
-            name: index.name,
-            emoji: index.emoji,
-            price,
-            change,
-            changePercent,
-            timestamp: Math.floor(Date.now() / 1000),
-          });
+    if (!data.quoteResponse?.result) {
+      throw new Error('Invalid response format');
+    }
 
-          console.log(`[Market] ${index.symbol}: $${price}`);
-        }
+    const results = stocks.map((stock) => {
+      const quote = data.quoteResponse.result.find((q) => q.symbol === stock.symbol);
 
-        // Rate limit 회피: 각 호출 사이 1.5초 딜레이
-        // Alpha Vantage 무료: 1 request/second 제한
-        if (indices.indexOf(index) < indices.length - 1) {
-          await delay(1500);
-        }
-      } catch (error) {
-        console.error(`Failed to fetch ${index.symbol}:`, error);
-        results.push({
-          symbol: index.symbol,
-          name: index.name,
-          emoji: index.emoji,
+      if (!quote) {
+        console.warn(`[Market] No data for ${stock.symbol}`);
+        return {
+          symbol: stock.symbol,
+          name: stock.name,
+          emoji: stock.emoji,
           price: 0,
           change: 0,
           changePercent: 0,
           timestamp: 0,
-        });
+        };
       }
-    }
+
+      console.log(
+        `[Market] ${stock.symbol}: $${quote.regularMarketPrice?.toFixed(2)} (${quote.regularMarketChangePercent?.toFixed(2)}%)`,
+      );
+
+      return {
+        symbol: stock.symbol,
+        name: stock.name,
+        emoji: stock.emoji,
+        price: quote.regularMarketPrice || 0,
+        change: quote.regularMarketChange || 0,
+        changePercent: quote.regularMarketChangePercent || 0,
+        timestamp: Math.floor(Date.now() / 1000),
+      };
+    });
 
     // 캐시 저장
-    if (results.length > 0 && typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       const cacheData: CachedData = {
         data: results,
         timestamp: Date.now(),
       };
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-      console.log('[Market] Cache saved for 1 hour');
+      console.log('[Market] Cache saved for 5 minutes');
     }
 
     return results;
   } catch (error) {
-    console.error('Failed to fetch market indices:', error);
+    console.error('[Market] Error fetching data:', error);
+
+    // 캐시가 있으면 만료되었어도 반환
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        try {
+          const cachedData: CachedData = JSON.parse(cached);
+          console.log('[Market] Using stale cache due to error');
+          return cachedData.data;
+        } catch (e) {
+          // 무시
+        }
+      }
+    }
+
     return [];
   }
 }
