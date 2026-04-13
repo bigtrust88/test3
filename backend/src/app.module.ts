@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { PostsModule } from './posts/posts.module';
 import { AiLogsModule } from './ai-logs/ai-logs.module';
 import { ThumbnailModule } from './thumbnails/thumbnail.module';
+import { MarketModule } from './market/market.module';
 
 @Module({
   imports: [
@@ -51,6 +52,9 @@ import { ThumbnailModule } from './thumbnails/thumbnail.module';
 
     // Thumbnail Module
     ThumbnailModule,
+
+    // Market Module
+    MarketModule,
   ],
   controllers: [AppController],
   providers: [AppService],

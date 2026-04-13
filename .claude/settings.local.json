@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -v https://api.bigtrust.site/api)",
+      "Bash(curl -v https://bigtrust.site)",
+      "Bash(nslookup bigtrust.site)",
+      "WebFetch(domain:finnhub.io)",
+      "WebFetch(domain:www.alphavantage.co)"
+    ]
+  }
+}

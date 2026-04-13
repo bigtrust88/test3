@@ -177,72 +177,15 @@ export async function deletePost(id: string): Promise<void> {
 }
 
 // ============================================
-// Market Data API (Yahoo Finance - Unofficial)
+// Market Data API (Backend)
 // ============================================
 
-const YAHOO_FINANCE_URL = 'https://query1.finance.yahoo.com/v7/finance/quote';
-const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
-const CACHE_KEY = 'market_stocks_cache';
-const CACHE_DURATION = 5 * 60 * 1000; // 5분
-
-interface YahooQuoteResponse {
-  quoteResponse: {
-    result: {
-      symbol: string;
-      regularMarketPrice: number;
-      regularMarketChange: number;
-      regularMarketChangePercent: number;
-    }[];
-  };
-}
-
-interface CachedData {
-  data: MarketIndex[];
-  timestamp: number;
-}
-
-// 더미 데이터 (API 실패 시 표시)
-const DUMMY_DATA: MarketIndex[] = [
-  {
-    symbol: 'AAPL',
-    name: 'Apple',
-    emoji: '🍎',
-    price: 230.5,
-    change: 2.5,
-    changePercent: 1.1,
-    timestamp: Math.floor(Date.now() / 1000),
-  },
-  {
-    symbol: 'MSFT',
-    name: 'Microsoft',
-    emoji: '💻',
-    price: 425.75,
-    change: 5.2,
-    changePercent: 1.24,
-    timestamp: Math.floor(Date.now() / 1000),
-  },
-  {
-    symbol: 'TSLA',
-    name: 'Tesla',
-    emoji: '⚡',
-    price: 182.3,
-    change: -3.1,
-    changePercent: -1.67,
-    timestamp: Math.floor(Date.now() / 1000),
-  },
-  {
-    symbol: 'NVDA',
-    name: 'NVIDIA',
-    emoji: '🎮',
-    price: 875.2,
-    change: 12.5,
-    changePercent: 1.45,
-    timestamp: Math.floor(Date.now() / 1000),
-  },
-];
-
 export async function getMarketIndices(): Promise<MarketIndex[]> {
-  // 더미 데이터 반환 (간단하게)
-  console.log('[Market] Showing market data');
-  return DUMMY_DATA;
+  try {
+    const response = await fetchAPI<MarketIndex[]>('/market/indices');
+    return response;
+  } catch (error) {
+    console.error('[Market] Error fetching data:', error);
+    return [];
+  }
 }
