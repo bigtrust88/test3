@@ -7,9 +7,10 @@
     "nodeVersion": "18.x"
   },
   "env": {
-    "NEXT_PUBLIC_API_URL": "@api_url",
-    "NEXT_PUBLIC_SITE_URL": "@site_url",
-    "NEXT_PUBLIC_ADSENSE_ID": "@adsense_id"
+    "NEXT_PUBLIC_API_URL": "https://api.usstockstory.com",
+    "NEXT_PUBLIC_SITE_URL": "https://usstockstory.com",
+    "NEXT_PUBLIC_ADSENSE_ID": "ca-pub-3811219422484638",
+    "REVALIDATE_SECRET": "revalidate-secret-123456789"
   },
   "regions": ["icn1"],
   "functions": {
