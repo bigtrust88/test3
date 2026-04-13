@@ -4,7 +4,7 @@
  * Backend: GET /posts/published (공개), GET /posts (관리자/JWT)
  */
 
-import { ApiResponse, Post, Category, Tag, LoginResponse, QueryParams } from './types';
+import { ApiResponse, Post, Category, Tag, LoginResponse, QueryParams, MarketIndex } from './types';
 import { STORAGE_KEYS } from './constants';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -174,4 +174,71 @@ export async function deletePost(id: string): Promise<void> {
   await fetchAPI(`/posts/${id}`, {
     method: 'DELETE',
   });
+}
+
+// ============================================
+// Market Data API (Finnhub)
+// ============================================
+
+const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
+const FINNHUB_URL = 'https://finnhub.io/api/v1';
+
+interface FinnhubQuote {
+  c: number; // current price
+  d: number; // change
+  dp: number; // change percent
+  t: number; // timestamp
+}
+
+export async function getMarketIndices(): Promise<MarketIndex[]> {
+  if (!FINNHUB_API_KEY) {
+    console.warn('FINNHUB_API_KEY not set');
+    return [];
+  }
+
+  const indices = [
+    { symbol: 'IXIC', name: 'NASDAQ', emoji: '💻' },
+    { symbol: '^GSPC', name: 'S&P 500', emoji: '📈' },
+    { symbol: '^DJI', name: 'DOW JONES', emoji: '🏛️' },
+    { symbol: '^VIX', name: 'VIX (공포지수)', emoji: '😱' },
+  ];
+
+  try {
+    const results = await Promise.all(
+      indices.map(async (index) => {
+        try {
+          const response = await fetch(
+            `${FINNHUB_URL}/quote?symbol=${index.symbol}&token=${FINNHUB_API_KEY}`,
+          );
+          const data: FinnhubQuote = await response.json();
+
+          return {
+            symbol: index.symbol,
+            name: index.name,
+            emoji: index.emoji,
+            price: data.c || 0,
+            change: data.d || 0,
+            changePercent: data.dp || 0,
+            timestamp: data.t || Date.now() / 1000,
+          };
+        } catch (error) {
+          console.error(`Failed to fetch ${index.symbol}:`, error);
+          return {
+            symbol: index.symbol,
+            name: index.name,
+            emoji: index.emoji,
+            price: 0,
+            change: 0,
+            changePercent: 0,
+            timestamp: 0,
+          };
+        }
+      }),
+    );
+
+    return results;
+  } catch (error) {
+    console.error('Failed to fetch market indices:', error);
+    return [];
+  }
 }

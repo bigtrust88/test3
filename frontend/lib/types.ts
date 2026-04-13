@@ -30,6 +30,16 @@ export interface Tag {
   created_at: string;
 }
 
+export interface MarketIndex {
+  symbol: string;
+  name: string;
+  emoji: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  timestamp: number;
+}
+
 export interface Post {
   id: string;
   uuid: string;
