@@ -1,0 +1,20 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "projectSettings": {
+    "nodeVersion": "18.x"
+  },
+  "env": {
+    "NEXT_PUBLIC_API_URL": "@api_url",
+    "NEXT_PUBLIC_SITE_URL": "@site_url",
+    "NEXT_PUBLIC_ADSENSE_ID": "@adsense_id"
+  },
+  "regions": ["icn1"],
+  "functions": {
+    "app/**/*": {
+      "maxDuration": 60
+    }
+  }
+}

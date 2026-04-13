@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #3b82f6; /* Blue */
+  --color-secondary: #64748b; /* Slate */
+  --color-accent: #10b981; /* Green */
+  --color-danger: #ef4444; /* Red */
+  --color-warning: #f59e0b; /* Amber */
+}
+
+* {
+  @apply border-gray-200 dark:border-gray-800;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-white dark:bg-slate-950 text-gray-900 dark:text-gray-100;
+}
+
+/* Scrollbar 스타일 (데스크탑) */
+::-webkit-scrollbar {
+  @apply w-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-700 rounded-lg;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-600;
+}
+
+/* 선택 스타일 */
+::selection {
+  @apply bg-blue-500 text-white;
+}
+
+/* 링크 기본 스타일 */
+a {
+  @apply transition-colors duration-200;
+}
+
+/* 코드 블록 */
+code {
+  @apply bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded text-sm font-mono;
+}
+
+pre {
+  @apply bg-gray-100 dark:bg-gray-900 p-4 rounded-lg overflow-x-auto;
+}
+
+/* 폼 요소 */
+input,
+textarea,
+select {
+  @apply transition-colors duration-200;
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.3s ease-in-out;
+}

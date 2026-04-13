@@ -1,0 +1,35 @@
+{
+  "name": "stock-blog-frontend",
+  "version": "1.0.0",
+  "description": "Next.js 14 frontend for US stock blog",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "validate": "npm run type-check && npm run lint && npm run build"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "next-themes": "^0.2.1",
+    "clsx": "^2.0.0",
+    "swr": "^2.2.0",
+    "dompurify": "^3.0.0",
+    "isomorphic-dompurify": "^2.11.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "tailwindcss": "^3.3.0",
+    "autoprefixer": "^10.0.0",
+    "postcss": "^8.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/node": "^20.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0"
+  }
+}
