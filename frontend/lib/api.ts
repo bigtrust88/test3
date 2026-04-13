@@ -217,12 +217,21 @@ export async function getMarketIndices(): Promise<MarketIndex[]> {
   if (typeof window !== 'undefined') {
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
-      const cachedData: CachedData = JSON.parse(cached);
-      const isExpired = Date.now() - cachedData.timestamp > CACHE_DURATION;
+      try {
+        const cachedData: CachedData = JSON.parse(cached);
+        const isExpired = Date.now() - cachedData.timestamp > CACHE_DURATION;
 
-      if (!isExpired) {
-        console.log('[Market] Using cached data (expires in', Math.round((CACHE_DURATION - (Date.now() - cachedData.timestamp)) / 1000), 's)');
-        return cachedData.data;
+        // 캐시된 데이터가 유효한 항목을 가지고 있는지 확인
+        if (!isExpired && cachedData.data && cachedData.data.length > 0 && cachedData.data[0].price > 0) {
+          console.log('[Market] Using cached data (expires in', Math.round((CACHE_DURATION - (Date.now() - cachedData.timestamp)) / 1000), 's)');
+          return cachedData.data;
+        } else {
+          console.log('[Market] Cache expired or invalid, fetching fresh data...');
+          localStorage.removeItem(CACHE_KEY);
+        }
+      } catch (e) {
+        console.log('[Market] Cache parsing error, clearing cache');
+        localStorage.removeItem(CACHE_KEY);
       }
     }
   }
