@@ -59,7 +59,7 @@ export function MarketWidget() {
   return (
     <section className="py-8 mb-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">주요 지수</h2>
+        <h2 className="text-2xl font-bold">주요 종목</h2>
         {loading && <span className="text-xs text-gray-500">업데이트 중...</span>}
       </div>
 

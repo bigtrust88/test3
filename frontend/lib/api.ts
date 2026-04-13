@@ -182,7 +182,7 @@ export async function deletePost(id: string): Promise<void> {
 
 const ALPHA_VANTAGE_API_KEY = process.env.NEXT_PUBLIC_ALPHA_VANTAGE_API_KEY;
 const ALPHA_VANTAGE_URL = 'https://www.alphavantage.co/query';
-const CACHE_KEY = 'market_indices_cache';
+const CACHE_KEY = 'market_stocks_cache';
 const CACHE_DURATION = 60 * 60 * 1000; // 1시간
 
 interface AlphaVantageQuote {
@@ -228,10 +228,10 @@ export async function getMarketIndices(): Promise<MarketIndex[]> {
   }
 
   const indices = [
-    { symbol: 'IXIC', name: 'NASDAQ', emoji: '💻' },
-    { symbol: 'GSPC', name: 'S&P 500', emoji: '📈' },
-    { symbol: 'DJI', name: 'DOW JONES', emoji: '🏛️' },
-    { symbol: 'VIX', name: 'VIX (공포지수)', emoji: '😱' },
+    { symbol: 'AAPL', name: 'Apple', emoji: '🍎' },
+    { symbol: 'MSFT', name: 'Microsoft', emoji: '💻' },
+    { symbol: 'TSLA', name: 'Tesla', emoji: '⚡' },
+    { symbol: 'NVDA', name: 'NVIDIA', emoji: '🎮' },
   ];
 
   const results: MarketIndex[] = [];
