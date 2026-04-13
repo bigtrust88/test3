@@ -1,0 +1,55 @@
+{
+  "name": "01-morning-briefing",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "value": 0
+            }
+          ]
+        }
+      },
+      "id": "1",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.usstockstory.com/api/ai-logs/internal/create",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-n8n-secret",
+              "value": "={{ $env.N8N_SECRET_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParametersJson": "{\n  \"trigger_type\": \"morning\",\n  \"model\": \"claude-haiku-4-5\",\n  \"prompt_tokens\": 0,\n  \"completion_tokens\": 0,\n  \"total_tokens\": 0,\n  \"cost\": 0,\n  \"status\": \"in_progress\",\n  \"error_message\": null\n}"
+      },
+      "id": "2",
+      "name": "Create AI Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    }
+  ],
+  "connections": {
+    "1": {
+      "main": [[{"node": "2", "branch": 0, "type": "main", "index": 0}]]
+    }
+  },
+  "active": true,
+  "settings": {}
+}
