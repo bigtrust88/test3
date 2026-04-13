@@ -12,7 +12,7 @@ export class MarkdownUtil {
     const renderer = new marked.Renderer();
     const originalImage = renderer.image.bind(renderer);
 
-    renderer.image = (token) => {
+    renderer.image = (token: any) => {
       // 상대 경로를 CDN URL로 변환 (필요시)
       let url = token.href;
       if (!url.startsWith('http')) {
@@ -23,7 +23,7 @@ export class MarkdownUtil {
 
     // 링크 보안: target="_blank", rel="noopener noreferrer" 추가
     const originalLink = renderer.link.bind(renderer);
-    renderer.link = (token) => {
+    renderer.link = (token: any) => {
       return `<a href="${token.href}" target="_blank" rel="noopener noreferrer">${token.text}</a>`;
     };
 

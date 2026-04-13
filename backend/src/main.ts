@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { N8nAuthMiddleware } from './common/middleware';
+// import { N8nAuthMiddleware } from './common/middleware'; // disabled
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -19,10 +19,10 @@ async function bootstrap() {
     optionsSuccessStatus: 200,
   });
 
-  // n8n Internal API Authentication Middleware
+  // n8n Internal API Authentication Middleware (disabled - modules not active)
   // Posts와 AI Logs의 internal 엔드포인트에 미들웨어 적용
-  app.use('/api/posts/internal', new N8nAuthMiddleware());
-  app.use('/api/ai-logs/internal', new N8nAuthMiddleware());
+  // app.use('/api/posts/internal', new N8nAuthMiddleware());
+  // app.use('/api/ai-logs/internal', new N8nAuthMiddleware());
 
   // Global Validation Pipe
   app.useGlobalPipes(

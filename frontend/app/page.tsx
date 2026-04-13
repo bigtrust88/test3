@@ -7,7 +7,7 @@
 export const revalidate = 300;
 
 import { Suspense } from 'react';
-import { MarketWidget } from '@/components/MarketWidget';
+// import { MarketWidget } from '@/components/MarketWidget'; // 마켓 위젯 임시 비활성화
 import { LatestPostsGrid } from '@/components/LatestPostsGrid';
 import { CategorySection } from '@/components/CategorySection';
 import { TagCloud } from '@/components/TagCloud';
@@ -66,10 +66,11 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 실시간 주가 위젯 */}
+      {/* 실시간 주가 위젯 - 임시 비활성화 (나중에 추가 예정)
       <Suspense fallback={<div className="h-32 bg-gray-100 dark:bg-gray-900 rounded-lg" />}>
         <MarketWidget />
       </Suspense>
+      */}
 
       {/* 최신 포스트 */}
       <Suspense fallback={<LatestPostsGrid posts={[]} isLoading={true} />}>

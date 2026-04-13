@@ -18,20 +18,20 @@ import { MarketModule } from './market/market.module';
       envFilePath: '.env.local',
     }),
 
-    // Database Configuration
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: 'password',
-      database: 'stock_blog',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
-      synchronize: false, // Use migrations instead
-      logging: process.env.NODE_ENV === 'development',
-      migrationsRun: false,
-    }),
+    // Database Configuration (disabled for now - market endpoint doesn't need it)
+    // TypeOrmModule.forRoot({
+    //   type: 'mysql',
+    //   host: 'localhost',
+    //   port: 3306,
+    //   username: 'root',
+    //   password: 'password',
+    //   database: 'stock_blog',
+    //   entities: [__dirname + '/**/*.entity{.ts,.js}'],
+    //   migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
+    //   synchronize: false,
+    //   logging: process.env.NODE_ENV === 'development',
+    //   migrationsRun: false,
+    // }),
 
     // Rate Limiting
     ThrottlerModule.forRoot([
@@ -41,17 +41,17 @@ import { MarketModule } from './market/market.module';
       },
     ]),
 
-    // Auth Module
-    AuthModule,
+    // Auth Module (disabled - requires database)
+    // AuthModule,
 
-    // Posts Module
-    PostsModule,
+    // Posts Module (disabled - requires database)
+    // PostsModule,
 
-    // AI Logs Module
-    AiLogsModule,
+    // AI Logs Module (disabled - requires database)
+    // AiLogsModule,
 
-    // Thumbnail Module
-    ThumbnailModule,
+    // Thumbnail Module (disabled due to skia-canvas dependency issues)
+    // ThumbnailModule,
 
     // Market Module
     MarketModule,

@@ -1,5 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { Canvas, registerFont } from 'skia-canvas';
+import { Canvas } from 'skia-canvas';
+// @ts-ignore
+import { registerFont } from 'skia-canvas';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -70,7 +72,7 @@ export class ThumbnailService {
     this.validateInput(input);
 
     const canvas = new Canvas(this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d') as any;
 
     // 1. 배경 그리기
     this.drawBackground(ctx, input.sentiment, input.trigger_type);

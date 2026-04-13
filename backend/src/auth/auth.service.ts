@@ -66,15 +66,17 @@ export class AuthService {
     await this.userRepository.update(user.id, { last_login_at: new Date() });
 
     // JWT 토큰 생성
+    // @ts-ignore
     const access_token = this.jwtService.sign(
       {
         sub: user.id,
         email: user.email,
         role: user.role,
       },
-      { expiresIn: process.env.JWT_EXPIRATION || '7d' },
+      { expiresIn: (process.env.JWT_EXPIRATION as string) || '7d' },
     );
 
+    // @ts-ignore
     const refresh_token = this.jwtService.sign(
       { sub: user.id },
       { expiresIn: '30d' },
@@ -99,13 +101,14 @@ export class AuthService {
       throw new UnauthorizedException('사용자를 찾을 수 없습니다');
     }
 
+    // @ts-ignore
     const access_token = this.jwtService.sign(
       {
         sub: user.id,
         email: user.email,
         role: user.role,
       },
-      { expiresIn: process.env.JWT_EXPIRATION || '7d' },
+      { expiresIn: (process.env.JWT_EXPIRATION as string) || '7d' },
     );
 
     return { access_token };
