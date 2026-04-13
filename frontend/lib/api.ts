@@ -181,6 +181,7 @@ export async function deletePost(id: string): Promise<void> {
 // ============================================
 
 const YAHOO_FINANCE_URL = 'https://query1.finance.yahoo.com/v7/finance/quote';
+const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
 const CACHE_KEY = 'market_stocks_cache';
 const CACHE_DURATION = 5 * 60 * 1000; // 5분
 
@@ -277,7 +278,9 @@ export async function getMarketIndices(): Promise<MarketIndex[]> {
 
     console.log(`[Market] Fetching from Yahoo Finance: ${symbols}`);
 
-    const response = await fetch(url.toString());
+    // CORS 프록시를 통해 요청 (개발 환경용)
+    const proxyUrl = CORS_PROXY + url.toString();
+    const response = await fetch(proxyUrl);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
