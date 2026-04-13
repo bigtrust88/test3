@@ -200,6 +200,46 @@ interface CachedData {
   timestamp: number;
 }
 
+// 더미 데이터 (API 실패 시 표시)
+const DUMMY_DATA: MarketIndex[] = [
+  {
+    symbol: 'AAPL',
+    name: 'Apple',
+    emoji: '🍎',
+    price: 230.5,
+    change: 2.5,
+    changePercent: 1.1,
+    timestamp: Math.floor(Date.now() / 1000),
+  },
+  {
+    symbol: 'MSFT',
+    name: 'Microsoft',
+    emoji: '💻',
+    price: 425.75,
+    change: 5.2,
+    changePercent: 1.24,
+    timestamp: Math.floor(Date.now() / 1000),
+  },
+  {
+    symbol: 'TSLA',
+    name: 'Tesla',
+    emoji: '⚡',
+    price: 182.3,
+    change: -3.1,
+    changePercent: -1.67,
+    timestamp: Math.floor(Date.now() / 1000),
+  },
+  {
+    symbol: 'NVDA',
+    name: 'NVIDIA',
+    emoji: '🎮',
+    price: 875.2,
+    change: 12.5,
+    changePercent: 1.45,
+    timestamp: Math.floor(Date.now() / 1000),
+  },
+];
+
 export async function getMarketIndices(): Promise<MarketIndex[]> {
   // 캐시 확인
   if (typeof window !== 'undefined') {
@@ -308,6 +348,8 @@ export async function getMarketIndices(): Promise<MarketIndex[]> {
       }
     }
 
-    return [];
+    // 최후의 수단: 더미 데이터 반환 (실제 데이터를 받을 때까지 임시)
+    console.log('[Market] Returning dummy data');
+    return DUMMY_DATA;
   }
 }
