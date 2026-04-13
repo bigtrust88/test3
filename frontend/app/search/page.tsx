@@ -44,7 +44,7 @@ function SearchContent() {
         </div>
         {query && (
           <p className="mt-4 text-gray-600 dark:text-gray-400">
-            '{query}'에 대한 검색 결과: {results.length}개
+            &apos;{query}&apos;에 대한 검색 결과: {results.length}개
           </p>
         )}
       </div>
