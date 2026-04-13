@@ -11,6 +11,11 @@ import { Request, Response, NextFunction } from 'express';
 @Injectable()
 export class N8nAuthMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
+    // OPTIONS 요청은 통과 (CORS preflight)
+    if (req.method === 'OPTIONS') {
+      return next();
+    }
+
     const n8nSecret = req.headers['x-n8n-secret'] as string;
 
     // 환경 변수에서 비밀키 가져오기

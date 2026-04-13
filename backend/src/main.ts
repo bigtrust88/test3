@@ -12,10 +12,11 @@ async function bootstrap() {
 
   // CORS Configuration
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'http://localhost:3001', process.env.FRONTEND_URL || ''],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-N8N-Secret'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-N8N-Secret', '*'],
+    optionsSuccessStatus: 200,
   });
 
   // n8n Internal API Authentication Middleware
