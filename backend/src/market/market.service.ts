@@ -12,57 +12,9 @@ export interface MarketIndex {
 
 @Injectable()
 export class MarketService {
-  private readonly stocks = [
-    { symbol: 'AAPL', name: 'Apple', emoji: '🍎' },
-    { symbol: 'MSFT', name: 'Microsoft', emoji: '💻' },
-    { symbol: 'TSLA', name: 'Tesla', emoji: '⚡' },
-    { symbol: 'NVDA', name: 'NVIDIA', emoji: '🎮' },
-  ];
-
   async getMarketData(): Promise<MarketIndex[]> {
-    try {
-      const symbols = this.stocks.map((s) => s.symbol).join(',');
-      const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (!data.quoteResponse?.result) {
-        return this.getDummyData();
-      }
-
-      return this.stocks.map((stock) => {
-        const quote = data.quoteResponse.result.find(
-          (q: any) => q.symbol === stock.symbol,
-        );
-
-        if (!quote) {
-          return {
-            ...stock,
-            price: 0,
-            change: 0,
-            changePercent: 0,
-            timestamp: Math.floor(Date.now() / 1000),
-          };
-        }
-
-        return {
-          symbol: stock.symbol,
-          name: stock.name,
-          emoji: stock.emoji,
-          price: quote.regularMarketPrice || 0,
-          change: quote.regularMarketChange || 0,
-          changePercent: quote.regularMarketChangePercent || 0,
-          timestamp: Math.floor(Date.now() / 1000),
-        };
-      });
-    } catch (error) {
-      console.error('[Market] Error fetching data:', error);
-      return this.getDummyData();
-    }
-  }
-
-  private getDummyData(): MarketIndex[] {
+    // 개발/테스트: 더미 데이터 직접 반환
+    // 프로덕션에서는 실제 API 호출로 대체
     return [
       {
         symbol: 'AAPL',
