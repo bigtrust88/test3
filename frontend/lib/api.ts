@@ -182,6 +182,8 @@ export async function deletePost(id: string): Promise<void> {
 
 const ALPHA_VANTAGE_API_KEY = process.env.NEXT_PUBLIC_ALPHA_VANTAGE_API_KEY;
 const ALPHA_VANTAGE_URL = 'https://www.alphavantage.co/query';
+const CACHE_KEY = 'market_indices_cache';
+const CACHE_DURATION = 60 * 60 * 1000; // 1시간
 
 interface AlphaVantageQuote {
   'Global Quote': {
@@ -190,6 +192,11 @@ interface AlphaVantageQuote {
     '09. change': string;
     '10. change percent': string;
   };
+}
+
+interface CachedData {
+  data: MarketIndex[];
+  timestamp: number;
 }
 
 /**
@@ -204,6 +211,20 @@ export async function getMarketIndices(): Promise<MarketIndex[]> {
   if (!ALPHA_VANTAGE_API_KEY) {
     console.warn('ALPHA_VANTAGE_API_KEY not set');
     return [];
+  }
+
+  // 캐시 확인
+  if (typeof window !== 'undefined') {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const cachedData: CachedData = JSON.parse(cached);
+      const isExpired = Date.now() - cachedData.timestamp > CACHE_DURATION;
+
+      if (!isExpired) {
+        console.log('[Market] Using cached data (expires in', Math.round((CACHE_DURATION - (Date.now() - cachedData.timestamp)) / 1000), 's)');
+        return cachedData.data;
+      }
+    }
   }
 
   const indices = [
@@ -268,10 +289,10 @@ export async function getMarketIndices(): Promise<MarketIndex[]> {
           console.log(`[Market] ${index.symbol}: $${price}`);
         }
 
-        // Rate limit 회피: 각 호출 사이 12초 딜레이
-        // (5 calls/min = 60/5 = 12초 간격)
+        // Rate limit 회피: 각 호출 사이 1.5초 딜레이
+        // Alpha Vantage 무료: 1 request/second 제한
         if (indices.indexOf(index) < indices.length - 1) {
-          await delay(12000);
+          await delay(1500);
         }
       } catch (error) {
         console.error(`Failed to fetch ${index.symbol}:`, error);
@@ -285,6 +306,16 @@ export async function getMarketIndices(): Promise<MarketIndex[]> {
           timestamp: 0,
         });
       }
+    }
+
+    // 캐시 저장
+    if (results.length > 0 && typeof window !== 'undefined') {
+      const cacheData: CachedData = {
+        data: results,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+      console.log('[Market] Cache saved for 1 hour');
     }
 
     return results;
