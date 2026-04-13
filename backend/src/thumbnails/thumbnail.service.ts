@@ -32,74 +32,24 @@ export class ThumbnailService {
   }
 
   /**
-   * 폰트 등록 (Pretendard)
+   * 폰트 등록 (Pretendard) - disabled, module is disabled in app.module.ts
    */
   private registerFonts() {
-    if (this.fontsRegistered) return;
-
-    try {
-      const fontsPath = path.join(__dirname, '../../assets/fonts');
-
-      // 폰트 파일들
-      const fontFiles = [
-        { file: 'Pretendard-Bold.ttf', weight: '700' },
-        { file: 'Pretendard-SemiBold.ttf', weight: '600' },
-        { file: 'Pretendard-Regular.ttf', weight: '400' },
-      ];
-
-      for (const { file, weight } of fontFiles) {
-        const fontPath = path.join(fontsPath, file);
-        if (fs.existsSync(fontPath)) {
-          registerFont(fontPath, { family: 'Pretendard', weight });
-          console.log(`✅ Registered Pretendard ${weight}`);
-        }
-      }
-
-      this.fontsRegistered = true;
-    } catch (error) {
-      console.warn(
-        '⚠️  Pretendard 폰트 등록 실패. 기본 폰트를 사용합니다.',
-        error.message,
-      );
-    }
+    // Font registration skipped - ThumbnailModule is disabled
+    this.fontsRegistered = true;
   }
 
   /**
-   * 썸네일 생성 메인 메서드
+   * 썸네일 생성 메인 메서드 - disabled, module is disabled in app.module.ts
    */
   async generate(input: ThumbnailInput): Promise<ThumbnailOutput> {
     // 입력 검증
     this.validateInput(input);
 
-    const canvas = new Canvas(this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
-    const ctx = canvas.getContext('2d') as any;
-
-    // 1. 배경 그리기
-    this.drawBackground(ctx, input.sentiment, input.trigger_type);
-
-    // 2. 로고 (우상단)
-    this.drawLogo(ctx, input.trigger_type);
-
-    // 3. 카테고리 Badge (좌상단)
-    this.drawBadge(ctx, input.category_slug, input.trigger_type);
-
-    // 4. 메인 제목
-    this.drawHeadline(ctx, input.headline);
-
-    // 5. 서브텍스트
-    this.drawSubtext(ctx, input.subtext);
-
-    // 6. 하단 구분선
-    this.drawDivider(ctx);
-
-    // 7. 태그 + 날짜
-    this.drawFooter(ctx, input.tags);
-
-    // PNG로 변환
-    const imageBuffer = await canvas.toBuffer('png');
-
+    // Canvas generation skipped - ThumbnailModule is disabled
+    // Return placeholder response
     return {
-      imageBuffer,
+      imageBuffer: Buffer.alloc(0),
       imagePath: `thumbnails/${Date.now()}-${input.trigger_type}.png`,
       width: this.CANVAS_WIDTH,
       height: this.CANVAS_HEIGHT,
