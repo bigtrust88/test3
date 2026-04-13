@@ -3,13 +3,11 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "projectSettings": {
-    "nodeVersion": "18.x"
-  },
   "env": {
     "NEXT_PUBLIC_API_URL": "https://api.bigtrust.site",
     "NEXT_PUBLIC_SITE_URL": "https://bigtrust.site",
     "NEXT_PUBLIC_ADSENSE_ID": "ca-pub-3811219422484638",
+    "NEXT_PUBLIC_ALPHA_VANTAGE_API_KEY": "5LODBBXCCKXGX7MN",
     "REVALIDATE_SECRET": "revalidate-secret-123456789"
   },
   "regions": ["icn1"],
