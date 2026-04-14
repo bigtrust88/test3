@@ -5,7 +5,21 @@
       "Bash(curl -v https://bigtrust.site)",
       "Bash(nslookup bigtrust.site)",
       "WebFetch(domain:finnhub.io)",
-      "WebFetch(domain:www.alphavantage.co)"
+      "WebFetch(domain:www.alphavantage.co)",
+      "Bash(cd /tmp)",
+      "Bash(curl -L -o Pretendard-Fonts.zip \"https://github.com/orioncactus/pretendard/releases/download/v1.3.9/Pretendard-1.3.9.zip\")",
+      "Bash(unzip -q Pretendard-Fonts.zip -d pretendard_extract)",
+      "Bash(cp \"/tmp/pretendard_extract/public/static/alternative/Pretendard-Bold.ttf\" \"c:\\\\Users\\\\User\\\\Documents\\\\TEST3\\\\backend\\\\assets\\\\fonts\\\\Pretendard-Bold.ttf\")",
+      "Bash(cp \"/tmp/pretendard_extract/public/static/alternative/Pretendard-SemiBold.ttf\" \"c:\\\\Users\\\\User\\\\Documents\\\\TEST3\\\\backend\\\\assets\\\\fonts\\\\Pretendard-SemiBold.ttf\")",
+      "Bash(cp \"/tmp/pretendard_extract/public/static/alternative/Pretendard-Regular.ttf\" \"c:\\\\Users\\\\User\\\\Documents\\\\TEST3\\\\backend\\\\assets\\\\fonts\\\\Pretendard-Regular.ttf\")",
+      "Bash(cp /tmp/pretendard_extract/public/static/alternative/Pretendard-Bold.ttf \"c:\\\\Users\\\\User\\\\Documents\\\\TEST3\\\\backend\\\\assets\\\\fonts\\\\Pretendard-Bold.ttf\")",
+      "Bash(cp /tmp/pretendard_extract/public/static/alternative/Pretendard-SemiBold.ttf \"c:\\\\Users\\\\User\\\\Documents\\\\TEST3\\\\backend\\\\assets\\\\fonts\\\\Pretendard-SemiBold.ttf\")",
+      "Bash(cp /tmp/pretendard_extract/public/static/alternative/Pretendard-Regular.ttf \"c:\\\\Users\\\\User\\\\Documents\\\\TEST3\\\\backend\\\\assets\\\\fonts\\\\Pretendard-Regular.ttf\")",
+      "Bash(curl -s http://localhost:3001/api/market/indices)",
+      "Bash(kill %1)",
+      "Bash(timeout 5 npm start)",
+      "Bash(cat vercel.json)",
+      "Bash(cat frontend/vercel.json)"
     ]
   }
 }

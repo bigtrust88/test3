@@ -250,32 +250,45 @@ export class PostsService {
   async update(id: string, updatePostDto: UpdatePostDto) {
     const post = await this.findById(id);
 
-    // 카테고리 확인
-    if (updatePostDto.category_id && updatePostDto.category_id !== post.category_id) {
-      const category = await this.categoryRepository.findOne({
-        where: { id: updatePostDto.category_id },
-      });
+    // 카테고리 확인 (slug 또는 id로 처리)
+    const categoryIdentifier = updatePostDto.category_slug || updatePostDto.category_id;
+    if (categoryIdentifier) {
+      let category = await this.categoryRepository.findOne({ where: { id: categoryIdentifier } });
       if (!category) {
-        throw new BadRequestException('존재하지 않는 카테고리입니다');
+        category = await this.categoryRepository.findOne({ where: { slug: categoryIdentifier } });
       }
+      if (!category) {
+        category = this.categoryRepository.create({ id: uuidv4(), slug: categoryIdentifier, name_ko: categoryIdentifier, description: '' });
+        await this.categoryRepository.save(category);
+      }
+      updatePostDto.category_id = category.id;
     }
 
     // slug 중복 확인 (수정 시)
     if (updatePostDto.slug && updatePostDto.slug !== post.slug) {
-      const existingPost = await this.postRepository.findOne({
-        where: { slug: updatePostDto.slug },
-      });
+      const existingPost = await this.postRepository.findOne({ where: { slug: updatePostDto.slug } });
       if (existingPost) {
         throw new ConflictException('이미 존재하는 슬러그입니다');
       }
     }
 
-    // 태그 처리
-    if (updatePostDto.tag_ids) {
-      const tags = await this.tagRepository.findBy({ id: In(updatePostDto.tag_ids) });
-      if (tags.length !== updatePostDto.tag_ids.length) {
-        throw new BadRequestException('존재하지 않는 태그가 있습니다');
+    // 태그 처리 (tag_names 우선)
+    if (updatePostDto.tag_names && updatePostDto.tag_names.length > 0) {
+      const tags: TagEntity[] = [];
+      for (const tagName of updatePostDto.tag_names) {
+        if (!tagName.trim()) continue;
+        let tag = await this.tagRepository.findOne({ where: { name: tagName.trim() } });
+        if (!tag) {
+          let tagSlug = MarkdownUtil.generateSlug(tagName);
+          if (!tagSlug) tagSlug = uuidv4().substring(0, 8);
+          tag = this.tagRepository.create({ id: uuidv4(), name: tagName.trim(), slug: tagSlug });
+          await this.tagRepository.save(tag);
+        }
+        tags.push(tag);
       }
+      post.tags = tags;
+    } else if (updatePostDto.tag_ids) {
+      const tags = await this.tagRepository.findBy({ id: In(updatePostDto.tag_ids) });
       post.tags = tags;
     }
 

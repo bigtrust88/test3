@@ -9,6 +9,7 @@ import { PostsModule } from './posts/posts.module';
 import { AiLogsModule } from './ai-logs/ai-logs.module';
 import { ThumbnailModule } from './thumbnails/thumbnail.module';
 import { MarketModule } from './market/market.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -52,6 +53,9 @@ import { MarketModule } from './market/market.module';
 
     // Market Module
     MarketModule,
+
+    // Upload Module
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],
