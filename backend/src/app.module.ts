@@ -22,6 +22,7 @@ import { MarketModule } from './market/market.module';
     TypeOrmModule.forRoot({
       type: 'mysql',
       url: process.env.MYSQL_URL,
+      charset: 'utf8mb4',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
       synchronize: false,
