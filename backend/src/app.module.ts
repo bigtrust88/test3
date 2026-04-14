@@ -47,8 +47,8 @@ import { MarketModule } from './market/market.module';
     // AI Logs Module
     AiLogsModule,
 
-    // Thumbnail Module
-    ThumbnailModule,
+    // Thumbnail Module (disabled - too much memory on Railway free plan)
+    // ThumbnailModule,
 
     // Market Module
     MarketModule,

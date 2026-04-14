@@ -1,5 +1,4 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as AWS from 'aws-sdk';
@@ -35,32 +34,8 @@ export class ThumbnailService {
    * 폰트 등록 (Pretendard)
    */
   private registerFonts() {
-    if (this.fontsRegistered) return;
-
-    try {
-      const fontFiles = [
-        { file: 'Pretendard-Bold.ttf', family: 'Pretendard Bold' },
-        { file: 'Pretendard-SemiBold.ttf', family: 'Pretendard SemiBold' },
-        { file: 'Pretendard-Regular.ttf', family: 'Pretendard' },
-      ];
-
-      for (const { file, family } of fontFiles) {
-        const fontPath = path.join(this.FONTS_PATH, file);
-        if (fs.existsSync(fontPath)) {
-          GlobalFonts.registerFromPath(fontPath, family);
-          console.log(`✅ Registered font: ${family}`);
-        }
-      }
-
-      this.fontsRegistered = true;
-      console.log('✅ @napi-rs/canvas Fonts registered successfully');
-    } catch (error) {
-      console.warn(
-        '⚠️ Pretendard font registration failed. Falling back to system fonts.',
-        error.message,
-      );
-      this.fontsRegistered = true;
-    }
+    // Canvas disabled - using stub
+    this.fontsRegistered = true;
   }
 
   /**
@@ -70,32 +45,8 @@ export class ThumbnailService {
     // 입력 검증
     this.validateInput(input);
 
-    const canvas = createCanvas(this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
-    const ctx = canvas.getContext('2d');
-
-    // 1. 배경 그리기
-    this.drawBackground(ctx, input.sentiment, input.trigger_type);
-
-    // 2. 로고 (우상단)
-    this.drawLogo(ctx, input.trigger_type);
-
-    // 3. 카테고리 Badge (좌상단)
-    this.drawBadge(ctx, input.category_slug, input.trigger_type);
-
-    // 4. 메인 제목
-    this.drawHeadline(ctx, input.headline);
-
-    // 5. 서브텍스트
-    this.drawSubtext(ctx, input.subtext);
-
-    // 6. 하단 구분선
-    this.drawDivider(ctx);
-
-    // 7. 태그 + 날짜
-    this.drawFooter(ctx, input.tags);
-
-    // PNG로 변환
-    const imageBuffer = await canvas.encode('png');
+    // Canvas generation disabled (memory constraints)
+    const imageBuffer = Buffer.alloc(0);
 
     return {
       imageBuffer,
