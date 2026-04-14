@@ -2,25 +2,24 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'NOT SET';
+  const results: Record<string, unknown> = { NEXT_PUBLIC_API_URL: apiUrl };
 
-  // 실제 API 호출 테스트
-  let apiStatus = 'unknown';
-  let postCount = 0;
-  try {
-    const res = await fetch(`${apiUrl}/api/posts/published`, {
-      cache: 'no-store',
-    });
-    const data = await res.json();
-    apiStatus = `HTTP ${res.status}`;
-    postCount = data?.pagination?.total || 0;
-  } catch (e) {
-    apiStatus = `ERROR: ${e instanceof Error ? e.message : String(e)}`;
+  const endpoints = [
+    '/api/posts/published',
+    '/api/posts/published/morning-briefing-2026-04-14',
+    '/api/categories',
+    '/api/tags',
+  ];
+
+  for (const ep of endpoints) {
+    try {
+      const res = await fetch(`${apiUrl}${ep}`, { cache: 'no-store' });
+      const data = await res.json();
+      results[ep] = { status: res.status, ok: res.ok, sample: JSON.stringify(data).substring(0, 100) };
+    } catch (e) {
+      results[ep] = { error: String(e) };
+    }
   }
 
-  return NextResponse.json({
-    NEXT_PUBLIC_API_URL: apiUrl,
-    apiCallStatus: apiStatus,
-    postCount,
-    timestamp: new Date().toISOString(),
-  });
+  return NextResponse.json(results);
 }
