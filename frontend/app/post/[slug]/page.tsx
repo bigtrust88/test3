@@ -61,16 +61,6 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   };
 }
 
-export async function generateStaticParams() {
-  try {
-    const res = await getPosts({ limit: 50 });
-    return (res.data || []).map((post) => ({
-      slug: post.slug,
-    }));
-  } catch {
-    return [];
-  }
-}
 
 export default async function PostPage({ params }: PostPageProps) {
   const { post, relatedPosts, tags } = await fetchPostData(params.slug);
