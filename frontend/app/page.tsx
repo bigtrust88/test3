@@ -16,26 +16,17 @@ import { getPosts, getCategories, getTags } from '@/lib/api';
 import { CATEGORIES } from '@/lib/constants';
 
 async function fetchData() {
-  try {
-    const [postsRes, categoriesRes, tagsRes] = await Promise.all([
-      getPosts({ limit: 20 }),
-      getCategories(),
-      getTags(),
-    ]);
+  const [postsRes, categoriesRes, tagsRes] = await Promise.allSettled([
+    getPosts({ limit: 20 }),
+    getCategories(),
+    getTags(),
+  ]);
 
-    return {
-      posts: postsRes.data || [],
-      categories: categoriesRes.data || [],
-      tags: tagsRes.data || [],
-    };
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
-    return {
-      posts: [],
-      categories: [],
-      tags: [],
-    };
-  }
+  return {
+    posts: postsRes.status === 'fulfilled' ? (postsRes.value?.data || []) : [],
+    categories: categoriesRes.status === 'fulfilled' ? (categoriesRes.value?.data || []) : [],
+    tags: tagsRes.status === 'fulfilled' ? (tagsRes.value?.data || []) : [],
+  };
 }
 
 export default async function Home() {
