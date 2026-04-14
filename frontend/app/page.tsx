@@ -7,7 +7,6 @@
 export const revalidate = 300;
 
 import { Suspense } from 'react';
-import { MarketWidget } from '@/components/MarketWidget';
 import { LatestPostsGrid } from '@/components/LatestPostsGrid';
 import { CategorySection } from '@/components/CategorySection';
 import { TagCloud } from '@/components/TagCloud';
@@ -66,8 +65,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 주요 종목 위젯 */}
-      <MarketWidget />
 
       {/* 최신 포스트 */}
       <Suspense fallback={<LatestPostsGrid posts={[]} isLoading={true} />}>
