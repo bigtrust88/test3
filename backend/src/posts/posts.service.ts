@@ -348,8 +348,19 @@ export class PostsService {
       });
 
       if (!tag) {
-        // 슬러그 생성 (MarkdownUtil 사용)
-        const tagSlug = MarkdownUtil.generateSlug(tagName);
+        // 슬러그 생성 - 빈 문자열이면 uuid 앞 8자리 사용
+        let tagSlug = MarkdownUtil.generateSlug(tagName);
+        if (!tagSlug || tagSlug.trim() === '') {
+          tagSlug = uuidv4().substring(0, 8);
+        }
+
+        // 슬러그 중복 확인
+        const existingBySlug = await this.tagRepository.findOne({
+          where: { slug: tagSlug },
+        });
+        if (existingBySlug) {
+          tagSlug = `${tagSlug}-${uuidv4().substring(0, 4)}`;
+        }
 
         tag = this.tagRepository.create({
           id: uuidv4(),
