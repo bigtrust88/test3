@@ -15,6 +15,7 @@ import { GiscusComments } from '@/components/GiscusComments';
 import { Sidebar } from '@/components/Sidebar';
 import { getPostBySlug, getPosts, getTags } from '@/lib/api';
 import { notFound } from 'next/navigation';
+import { AdUnit } from '@/components/AdUnit';
 
 interface PostPageProps {
   params: {
@@ -84,6 +85,9 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="lg:col-span-2 space-y-8">
           {/* 본문 */}
           <PostContent content={post.content_html} title={post.title} />
+
+          {/* 광고 - 본문 하단 */}
+          <AdUnit slot="YOUR_AD_SLOT_ID" format="horizontal" />
 
           {/* 관련 포스트 */}
           {categoryRelatedPosts.length > 0 && (

@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { Metadata } from 'next';
+import Script from 'next/script';
 import { Providers } from '@/components/Providers';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
     description: '미국 주식 분석 및 투자 전략',
     type: 'website',
     locale: 'ko_KR',
-    url: 'https://usstockstory.com',
+    url: 'https://bigtrust.site',
     siteName: 'US Stock Story',
   },
   icons: {
@@ -31,30 +32,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <head>
-        {/* AdSense */}
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3811219422484638"
-          crossOrigin="anonymous"
-        />
-
-        {/* Google Analytics (선택사항) */}
-        <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-XXXXXXXXXX');
-            `,
-          }}
-        />
-      </head>
+      <head />
+      <Script
+        async
+        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`}
+        crossOrigin="anonymous"
+        strategy="afterInteractive"
+      />
       <body>
         <Providers>
           <div className="flex flex-col min-h-screen">
