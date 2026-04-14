@@ -3,8 +3,9 @@
  * Dynamic route: /post/[slug]/
  */
 
-// ISR: 5분마다 재검증, 또는 On-demand ISR로 즉시 갱신
-export const revalidate = 300;
+// 정적으로 생성되지 않은 경로도 동적으로 처리
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
 
 import { Metadata } from 'next';
 import { PostHeader } from '@/components/PostHeader';
