@@ -50,8 +50,8 @@ import { MarketModule } from './market/market.module';
     // AI Logs Module (disabled - requires database)
     // AiLogsModule,
 
-    // Thumbnail Module (disabled due to skia-canvas dependency issues)
-    // ThumbnailModule,
+    // Thumbnail Module
+    ThumbnailModule,
 
     // Market Module
     MarketModule,

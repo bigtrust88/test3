@@ -1,7 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-// import { Canvas } from 'skia-canvas';
-// @ts-ignore
-// import { registerFont } from 'skia-canvas';
+import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -26,30 +24,80 @@ export class ThumbnailService {
   private readonly CANVAS_WIDTH = 1200;
   private readonly CANVAS_HEIGHT = 630;
   private fontsRegistered = false;
+  private readonly FONTS_PATH = path.join(__dirname, '../../assets/fonts');
 
   constructor() {
     this.registerFonts();
   }
 
   /**
-   * 폰트 등록 (Pretendard) - disabled, module is disabled in app.module.ts
+   * 폰트 등록 (Pretendard)
    */
   private registerFonts() {
-    // Font registration skipped - ThumbnailModule is disabled
-    this.fontsRegistered = true;
+    if (this.fontsRegistered) return;
+
+    try {
+      const fontFiles = [
+        { file: 'Pretendard-Bold.ttf', family: 'Pretendard Bold' },
+        { file: 'Pretendard-SemiBold.ttf', family: 'Pretendard SemiBold' },
+        { file: 'Pretendard-Regular.ttf', family: 'Pretendard' },
+      ];
+
+      for (const { file, family } of fontFiles) {
+        const fontPath = path.join(this.FONTS_PATH, file);
+        if (fs.existsSync(fontPath)) {
+          GlobalFonts.registerFromPath(fontPath, family);
+          console.log(`✅ Registered font: ${family}`);
+        }
+      }
+
+      this.fontsRegistered = true;
+      console.log('✅ @napi-rs/canvas Fonts registered successfully');
+    } catch (error) {
+      console.warn(
+        '⚠️ Pretendard font registration failed. Falling back to system fonts.',
+        error.message,
+      );
+      this.fontsRegistered = true;
+    }
   }
 
   /**
-   * 썸네일 생성 메인 메서드 - disabled, module is disabled in app.module.ts
+   * 썸네일 생성 메인 메서드
    */
   async generate(input: ThumbnailInput): Promise<ThumbnailOutput> {
     // 입력 검증
     this.validateInput(input);
 
-    // Canvas generation skipped - ThumbnailModule is disabled
-    // Return placeholder response
+    const canvas = createCanvas(this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
+    const ctx = canvas.getContext('2d');
+
+    // 1. 배경 그리기
+    this.drawBackground(ctx, input.sentiment, input.trigger_type);
+
+    // 2. 로고 (우상단)
+    this.drawLogo(ctx, input.trigger_type);
+
+    // 3. 카테고리 Badge (좌상단)
+    this.drawBadge(ctx, input.category_slug, input.trigger_type);
+
+    // 4. 메인 제목
+    this.drawHeadline(ctx, input.headline);
+
+    // 5. 서브텍스트
+    this.drawSubtext(ctx, input.subtext);
+
+    // 6. 하단 구분선
+    this.drawDivider(ctx);
+
+    // 7. 태그 + 날짜
+    this.drawFooter(ctx, input.tags);
+
+    // PNG로 변환
+    const imageBuffer = await canvas.encode('png');
+
     return {
-      imageBuffer: Buffer.alloc(0),
+      imageBuffer,
       imagePath: `thumbnails/${Date.now()}-${input.trigger_type}.png`,
       width: this.CANVAS_WIDTH,
       height: this.CANVAS_HEIGHT,
@@ -137,7 +185,7 @@ export class ThumbnailService {
     ctx.fillText(icon, this.CANVAS_WIDTH - 100, 65);
 
     // 로고 텍스트
-    ctx.font = 'bold 22px Pretendard, Arial';
+    ctx.font = '22px Pretendard Bold';
     ctx.fillStyle = '#FFFFFF';
     ctx.textAlign = 'right';
     ctx.fillText('USStockStory', this.CANVAS_WIDTH - 55, 65);
@@ -178,7 +226,7 @@ export class ThumbnailService {
     ctx.fill();
 
     // Badge 텍스트
-    ctx.font = '600 20px Pretendard, Arial';
+    ctx.font = '20px Pretendard SemiBold';
     ctx.fillStyle = '#FFFFFF';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -189,7 +237,7 @@ export class ThumbnailService {
    * 메인 제목 그리기
    */
   private drawHeadline(ctx: any, headline: string) {
-    ctx.font = 'bold 56px Pretendard, Arial';
+    ctx.font = '56px Pretendard Bold';
     ctx.fillStyle = '#FFFFFF';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
@@ -208,7 +256,7 @@ export class ThumbnailService {
    * 서브텍스트 그리기
    */
   private drawSubtext(ctx: any, subtext: string) {
-    ctx.font = '400 32px Pretendard, Arial';
+    ctx.font = '32px Pretendard';
     ctx.fillStyle = '#94A3B8';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
@@ -240,7 +288,7 @@ export class ThumbnailService {
     const footerY = this.CANVAS_HEIGHT - 48;
 
     // 태그 (좌측)
-    ctx.font = '400 20px Pretendard, Arial';
+    ctx.font = '20px Pretendard';
     ctx.fillStyle = '#94A3B8';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
