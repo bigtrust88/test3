@@ -32,9 +32,9 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
 export async function generateStaticParams() {
   try {
     const res = await getTags();
-    return (res.data || []).map((tag) => ({
-      tag: tag.slug,
-    }));
+    return (res.data || [])
+      .filter((tag) => tag.slug && tag.slug.trim() !== '')
+      .map((tag) => ({ tag: tag.slug }));
   } catch {
     return [];
   }
