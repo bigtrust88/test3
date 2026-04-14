@@ -108,6 +108,16 @@ export class PostsService {
     return post;
   }
 
+  // 카테고리 전체 조회 (공개)
+  async findAllCategories() {
+    return this.categoryRepository.find({ order: { name_ko: 'ASC' } });
+  }
+
+  // 태그 전체 조회 (공개)
+  async findAllTags() {
+    return this.tagRepository.find({ order: { name: 'ASC' } });
+  }
+
   // 모든 포스트 조회 (관리자용)
   async findAll(query: QueryPostsDto) {
     let { page = 1, limit = 10, category_id, category, tag_id, tag, search, is_ai_generated, sort } = query;
