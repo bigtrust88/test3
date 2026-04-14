@@ -87,7 +87,7 @@ export default async function PostPage({ params }: PostPageProps) {
           <PostContent content={post.content_html} title={post.title} />
 
           {/* 광고 - 본문 하단 */}
-          <AdUnit slot="YOUR_AD_SLOT_ID" format="horizontal" />
+          <AdUnit slot="9205887899" format="auto" />
 
           {/* 관련 포스트 */}
           {categoryRelatedPosts.length > 0 && (

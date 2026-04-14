@@ -7,6 +7,7 @@
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
+import { AdUnit } from '@/components/AdUnit';
 import { LatestPostsGrid } from '@/components/LatestPostsGrid';
 import { CategorySection } from '@/components/CategorySection';
 import { TagCloud } from '@/components/TagCloud';
@@ -77,6 +78,9 @@ export default async function Home() {
           })}
         </div>
       )}
+
+      {/* 광고 */}
+      <AdUnit slot="9205887899" format="horizontal" />
 
       {/* 태그 클라우드 */}
       {tags.length > 0 && <TagCloud tags={tags.slice(0, 30)} />}
