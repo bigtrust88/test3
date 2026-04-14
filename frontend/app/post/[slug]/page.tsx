@@ -66,7 +66,13 @@ export default async function PostPage({ params }: PostPageProps) {
   const { post, relatedPosts, tags } = await fetchPostData(params.slug);
 
   if (!post) {
-    notFound();
+    return (
+      <div style={{padding:'2rem',fontFamily:'monospace'}}>
+        <h1>DEBUG: post is null</h1>
+        <p>slug: {params.slug}</p>
+        <p>API URL: {process.env.NEXT_PUBLIC_API_URL}</p>
+      </div>
+    );
   }
 
   const categoryRelatedPosts = relatedPosts.filter(
