@@ -301,18 +301,34 @@ export class PostsService {
     excerpt: string,
     content_md: string,
     content_html: string | null, // null일 경우 자동 렌더링
-    category_id: string,
+    category_id: string, // ID 또는 slug 모두 허용
     tag_names: string[],
     ai_source_urls: string[],
     reading_time_mins?: number,
   ) {
-    // 카테고리 확인
-    const category = await this.categoryRepository.findOne({
+    // 카테고리 확인 (ID 또는 slug로 검색)
+    let category = await this.categoryRepository.findOne({
       where: { id: category_id },
     });
     if (!category) {
-      throw new BadRequestException('존재하지 않는 카테고리입니다');
+      // slug로 재시도
+      category = await this.categoryRepository.findOne({
+        where: { slug: category_id },
+      });
     }
+    if (!category) {
+      // 카테고리가 없으면 자동 생성
+      category = this.categoryRepository.create({
+        id: uuidv4(),
+        slug: category_id,
+        name_ko: category_id,
+        name_en: category_id,
+        description: '',
+        order: 0,
+      });
+      await this.categoryRepository.save(category);
+    }
+    category_id = category.id;
 
     // HTML 렌더링 (제공되지 않았을 경우)
     let finalContentHtml = content_html;

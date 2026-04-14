@@ -94,10 +94,11 @@ export class PostsController {
       slug: string;
       excerpt: string;
       content_md: string;
-      content_html: string;
-      category_id: string;
+      content_html?: string;
+      category_id?: string;
+      category_slug?: string;
       tags: string[];
-      ai_source_urls: string[];
+      ai_source_urls?: string[];
       reading_time_mins?: number;
     },
   ) {
@@ -106,10 +107,10 @@ export class PostsController {
       payload.slug,
       payload.excerpt,
       payload.content_md,
-      payload.content_html,
-      payload.category_id,
+      payload.content_html || null,
+      payload.category_slug || payload.category_id || '시장동향',
       payload.tags,
-      payload.ai_source_urls,
+      payload.ai_source_urls || [],
       payload.reading_time_mins || 5,
     );
   }
