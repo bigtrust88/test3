@@ -23,21 +23,22 @@ interface PostPageProps {
 }
 
 async function fetchPostData(slug: string) {
-  try {
-    const [postRes, postsRes, tagsRes] = await Promise.all([
-      getPostBySlug(slug),
-      getPosts({ limit: 20 }),
-      getTags(),
-    ]);
+  const [postResult, postsResult, tagsResult] = await Promise.allSettled([
+    getPostBySlug(slug),
+    getPosts({ limit: 20 }),
+    getTags(),
+  ]);
 
-    return {
-      post: postRes,
-      relatedPosts: postsRes.data || [],
-      tags: tagsRes.data || [],
-    };
-  } catch (error) {
+  if (postResult.status === 'rejected') {
+    console.error(`[PostPage] getPostBySlug failed for slug "${slug}":`, postResult.reason);
     return { post: null, relatedPosts: [], tags: [] };
   }
+
+  return {
+    post: postResult.value,
+    relatedPosts: postsResult.status === 'fulfilled' ? (postsResult.value?.data || []) : [],
+    tags: tagsResult.status === 'fulfilled' ? (tagsResult.value?.data || []) : [],
+  };
 }
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
