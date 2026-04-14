@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as AWS from 'aws-sdk';
 
 export interface ThumbnailInput {
   headline: string;
@@ -102,6 +103,37 @@ export class ThumbnailService {
       width: this.CANVAS_WIDTH,
       height: this.CANVAS_HEIGHT,
     };
+  }
+
+  /**
+   * R2에 썸네일 업로드 후 공개 URL 반환
+   */
+  async uploadToR2(imageBuffer: Buffer, imagePath: string): Promise<string> {
+    const s3 = new AWS.S3({
+      endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+      region: 'auto',
+      signatureVersion: 'v4',
+    });
+
+    await s3.upload({
+      Bucket: process.env.R2_BUCKET || 'bigtrust-thumbnails',
+      Key: imagePath,
+      Body: imageBuffer,
+      ContentType: 'image/png',
+    }).promise();
+
+    const publicUrl = process.env.R2_PUBLIC_URL || '';
+    return `${publicUrl}/${imagePath}`;
+  }
+
+  /**
+   * 썸네일 생성 + R2 업로드 (원스텝)
+   */
+  async generateAndUpload(input: ThumbnailInput): Promise<string> {
+    const { imageBuffer, imagePath } = await this.generate(input);
+    return this.uploadToR2(imageBuffer, imagePath);
   }
 
   /**

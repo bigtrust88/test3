@@ -9,6 +9,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { QueryPostsDto } from './dto/query-posts.dto';
 import { MarkdownUtil } from '@/common/utils';
+import { ThumbnailService } from '../thumbnails/thumbnail.service';
 
 @Injectable()
 export class PostsService {
@@ -19,6 +20,7 @@ export class PostsService {
     private readonly categoryRepository: Repository<CategoryEntity>,
     @InjectRepository(TagEntity)
     private readonly tagRepository: Repository<TagEntity>,
+    private readonly thumbnailService: ThumbnailService,
   ) {}
 
   // 공개 포스트 조회 (페이지네이션)
@@ -401,6 +403,29 @@ export class PostsService {
     });
 
     await this.postRepository.save(post);
+
+    // 썸네일 생성 및 R2 업로드
+    try {
+      const hour = new Date().getHours();
+      const trigger_type = hour >= 8 && hour < 14 ? 'morning'
+        : hour >= 14 && hour < 22 ? 'afternoon' : 'evening';
+
+      const thumbnailUrl = await this.thumbnailService.generateAndUpload({
+        headline: title.substring(0, 44),
+        subtext: excerpt.substring(0, 30),
+        sentiment: 'neutral',
+        tags: tag_names.slice(0, 3),
+        category_slug: category_id,
+        trigger_type,
+      });
+
+      post.cover_image_url = thumbnailUrl;
+      await this.postRepository.save(post);
+      console.log('✅ 썸네일 생성 완료:', thumbnailUrl);
+    } catch (err) {
+      console.warn('⚠️ 썸네일 생성 실패 (포스트는 발행됨):', err.message);
+    }
+
     const savedPost = await this.findById(post.id);
 
     // ISR 재검증 트리거 (Next.js On-demand ISR)
