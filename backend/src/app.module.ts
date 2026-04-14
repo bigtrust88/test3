@@ -18,20 +18,16 @@ import { MarketModule } from './market/market.module';
       envFilePath: '.env.local',
     }),
 
-    // Database Configuration (disabled for now - market endpoint doesn't need it)
-    // TypeOrmModule.forRoot({
-    //   type: 'mysql',
-    //   host: 'localhost',
-    //   port: 3306,
-    //   username: 'root',
-    //   password: 'password',
-    //   database: 'stock_blog',
-    //   entities: [__dirname + '/**/*.entity{.ts,.js}'],
-    //   migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
-    //   synchronize: false,
-    //   logging: process.env.NODE_ENV === 'development',
-    //   migrationsRun: false,
-    // }),
+    // Database Configuration (Railway MySQL)
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      url: process.env.MYSQL_URL,
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
+      synchronize: false,
+      logging: process.env.NODE_ENV === 'development',
+      migrationsRun: true,
+    }),
 
     // Rate Limiting
     ThrottlerModule.forRoot([
@@ -41,14 +37,14 @@ import { MarketModule } from './market/market.module';
       },
     ]),
 
-    // Auth Module (disabled - requires database)
-    // AuthModule,
+    // Auth Module
+    AuthModule,
 
-    // Posts Module (disabled - requires database)
-    // PostsModule,
+    // Posts Module
+    PostsModule,
 
-    // AI Logs Module (disabled - requires database)
-    // AiLogsModule,
+    // AI Logs Module
+    AiLogsModule,
 
     // Thumbnail Module
     ThumbnailModule,
