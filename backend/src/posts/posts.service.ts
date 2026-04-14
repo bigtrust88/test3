@@ -322,9 +322,7 @@ export class PostsService {
         id: uuidv4(),
         slug: category_id,
         name_ko: category_id,
-        name_en: category_id,
         description: '',
-        order: 0,
       });
       await this.categoryRepository.save(category);
     }
