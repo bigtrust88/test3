@@ -3,8 +3,8 @@
  * 최신 포스트, 카테고리별 섹션, 실시간 주가 위젯
  */
 
-// ISR: 5분마다 재검증, 또는 On-demand ISR로 즉시 갱신
-export const revalidate = 300;
+// 항상 최신 데이터 가져오기 (SSR 모드)
+export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
 import { LatestPostsGrid } from '@/components/LatestPostsGrid';
