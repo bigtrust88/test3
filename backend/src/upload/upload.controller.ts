@@ -1,9 +1,11 @@
 import {
   Controller,
+  Get,
   Post,
   UploadedFile,
   UseInterceptors,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes } from '@nestjs/swagger';
@@ -13,6 +15,17 @@ import { v4 as uuidv4 } from 'uuid';
 @ApiTags('Upload')
 @Controller('upload')
 export class UploadController {
+  @Get('check')
+  checkEnv() {
+    return {
+      R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID ? '✅ 설정됨' : '❌ 없음',
+      R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID ? '✅ 설정됨' : '❌ 없음',
+      R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY ? '✅ 설정됨' : '❌ 없음',
+      R2_BUCKET: process.env.R2_BUCKET || '❌ 없음',
+      R2_PUBLIC_URL: process.env.R2_PUBLIC_URL || '❌ 없음',
+    };
+  }
+
   @Post('image')
   @ApiOperation({ summary: '이미지 R2 업로드' })
   @ApiConsumes('multipart/form-data')
@@ -50,12 +63,17 @@ export class UploadController {
       signatureVersion: 'v4',
     });
 
-    await s3.upload({
-      Bucket: r2Bucket,
-      Key: key,
-      Body: file.buffer,
-      ContentType: file.mimetype,
-    }).promise();
+    try {
+      await s3.upload({
+        Bucket: r2Bucket,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      }).promise();
+    } catch (err) {
+      console.error('R2 upload error:', err.message, err.code);
+      throw new InternalServerErrorException(`R2 업로드 실패: ${err.message}`);
+    }
 
     const url = `${r2PublicUrl}/${key}`;
     return { url };
