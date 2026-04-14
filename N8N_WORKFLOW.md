@@ -1,676 +1,416 @@
-# n8n 자동화 워크플로우 상세 명세
+# n8n 워크플로우 상세 명세 (bigtrust.site)
 
-## 개요
-
-3개의 독립적인 n8n 워크플로우를 매일 3회 실행 (08:00/14:00/22:00 KST).
-각 워크플로우는 뉴스 크롤링 → Claude API → 자동 발행까지 전체 파이프라인을 처리.
+> **이 문서는 N8N-QUICK-START.md의 심화 버전입니다.**  
+> 각 노드의 상세 설정이 필요할 때 참고하세요.
 
 ---
 
-## 1. 워크플로우 구조 (공통)
+## 현재 서버 정보
+
+| 항목 | 값 |
+|------|-----|
+| 프론트엔드 | `https://bigtrust.site` |
+| 백엔드 API | `https://api.bigtrust.site` |
+| 저장소 | `https://github.com/bigtrust88/test3` |
+| 배포 플랫폼 | Vercel (프론트) + Railway (백엔드) |
+
+---
+
+## 1. 워크플로우 전체 구조
 
 ```
-[Schedule Trigger (Cron)]
-    ↓
-[Set Context Variables]
-    ↓
-[RSS Feed Aggregation (병렬)]
-    ├─ Reuters 비즈니스 뉴스
-    ├─ MarketWatch 최신 뉴스
-    ├─ CNBC 속보
-    ├─ Seeking Alpha 헤드라인
-    └─ Investing.com 뉴스
-    ↓
-[Deduplication Check] → 최근 7일 크롤링 소스와 비교
-    ↓
-[Claude API Call] → JSON 생성
-    ↓
-[Validation] → JSON 형식 검증
-    ↓
-[NestJS API Call] → /api/internal/posts/publish
-    ↓
-[ISR Revalidation] → Next.js 캐시 갱신
-    ↓
-[Notification] → Discord/Telegram
-    ↓
-[Logging] → ai_post_logs 저장
+[1] Schedule Trigger     ← 매일 08:00 / 14:00 / 22:00 KST 실행
+        ↓
+[2] RSS 뉴스 수집        ← Reuters 등에서 최신 뉴스 3-5개 가져오기
+        ↓
+[3] 뉴스 파싱/정리       ← 제목, 요약, URL 추출
+        ↓
+[4] Claude API 호출      ← 뉴스를 바탕으로 한국어 블로그 글 작성 요청
+        ↓
+[5] 응답 JSON 파싱       ← Claude의 응답에서 title, content_md 등 추출
+        ↓
+[6] 포스트 발행 API      ← api.bigtrust.site에 포스트 저장
+        ↓
+[7] ISR 캐시 갱신        ← bigtrust.site Vercel 캐시 갱신
+        ↓
+[8] Discord 알림         ← (선택) 발행 완료 알림
 ```
 
 ---
 
-## 2. 워크플로우 상세 설정 (3개)
+## 2. 3개 워크플로우 설정 차이점
 
-### 2.1 워크플로우 #1: 프리마켓 브리핑 (08:00 KST)
+| 항목 | 01-morning | 02-afternoon | 03-evening |
+|------|-----------|--------------|------------|
+| 실행 시간 (KST) | 08:00 | 14:00 | 22:00 |
+| Cron (UTC) | `0 23 * * *` | `0 5 * * *` | `0 13 * * *` |
+| post_type | `morning` | `afternoon` | `evening` |
+| 뉴스 개수 | 3개 | 5개 | 5개 |
+| 분석 방향 | 프리마켓 브리핑 | 종목 심층분석 | 마감 리캡 + 내일 전략 |
 
-**이름**: `Stock Blog - Morning Pre-market (08:00)`
-**Cron**: `0 8 * * *` (매일 08:00 KST)
+---
 
-#### Node 1: Schedule Trigger
+## 3. 노드별 상세 설정
+
+### Node 1: Schedule Trigger
+
 ```
-Type: Cron
-Cron Expression: 0 8 * * *
-Timezone: Asia/Seoul
-```
+설정:
+- Trigger Rule: Cron Expression
+- Timezone: Asia/Seoul
 
-#### Node 2: Set Context
-```
-Type: Execute Code (JavaScript)
-
-Code:
-return {
-  "post_type": "morning",
-  "time_kst": new Date().toISOString(),
-  "target_hours": "8am-8:30am",
-  "context": "US market close (previous day) + pre-market futures"
-};
-
-Output: 
-{
-  "post_type": "morning",
-  "time_kst": "2025-04-13T08:00:00+09:00",
-  "target_hours": "8am-8:30am",
-  "context": "US market close + premarket"
-}
+워크플로우별 Cron:
+- 01-morning:   0 23 * * *   (UTC 23:00 = KST 08:00)
+- 02-afternoon: 0 5 * * *    (UTC 05:00 = KST 14:00)
+- 03-evening:   0 13 * * *   (UTC 13:00 = KST 22:00)
 ```
 
-#### Node 3-7: RSS Feed Aggregation (병렬)
+---
 
-**Node 3: Reuters Business Feed**
+### Node 2: RSS 뉴스 수집 (HTTP Request)
+
 ```
-Type: HTTP Request (RSS)
-URL: https://feeds.reuters.com/reuters/businessNews
 Method: GET
-Params:
-- format: RSS (자동)
+Response Format: Auto-detect
 
-Output: Array of news items
+권장 RSS 피드 URL (하나 선택):
+1. Reuters Business:  https://feeds.reuters.com/reuters/businessNews
+2. MarketWatch:       https://feeds.marketwatch.com/marketwatch/topstories/
+3. CNBC:              https://feeds.cnbc.com/cnbc/intl/world/
+4. Yahoo Finance:     https://finance.yahoo.com/news/rssindex
 ```
 
-**Node 4: MarketWatch**
-```
-Type: HTTP Request (RSS)
-URL: https://feeds.marketwatch.com/marketwatch/topstories/
-Output: Array
-```
+> 💡 여러 피드를 동시에 수집하려면 Node 2를 복수 추가하고 Merge Node로 합치세요.
 
-**Node 5: CNBC**
-```
-Type: HTTP Request (RSS)
-URL: https://feeds.cnbc.com/cnbc/intl/world/
-Output: Array
-```
+---
 
-**Node 6: Seeking Alpha**
-```
-Type: HTTP Request (RSS)
-URL: https://feeds.seekingalpha.com/feed.xml
-Output: Array
-```
+### Node 3: 뉴스 파싱/정리 (Code Node)
 
-**Node 7: Investing.com**
-```
-Type: HTTP Request (RSS)
-URL: https://feeds.investing.com/feeds/news_301.xml
-Output: Array
-```
+```javascript
+// 워크플로우 타입 설정 (워크플로우마다 변경)
+const POST_TYPE = 'morning';  // morning | afternoon | evening
+const NEWS_COUNT = 3;         // morning: 3, afternoon/evening: 5
 
-#### Node 8: Merge & Parse RSS
+const items = $input.all();
+const newsItems = [];
 
-```
-Type: Execute Code (JavaScript)
-
-Input: [reuters_items, marketwatch_items, cnbc_items, seekingalpha_items, investing_items]
-
-Code:
-const allNews = [
-  ...$input.all()[0],  // Reuters
-  ...($input.all()[1] || []),  // MarketWatch
-  ...($input.all()[2] || []),  // CNBC
-  ...($input.all()[3] || []),  // Seeking Alpha
-  ...($input.all()[4] || [])   // Investing
-];
-
-// 최신 뉴스 3개만 선택 (아침 버리핑은 신속성 중요)
-const sorted = allNews.sort((a, b) => 
-  new Date(b.pubDate) - new Date(a.pubDate)
-).slice(0, 3);
-
-return {
-  "news": sorted.map(item => ({
-    "title": item.title,
-    "source": item.source,
-    "url": item.link,
-    "published_at": item.pubDate,
-    "summary": item.description
-  })),
-  "count": sorted.length
-};
-
-Output:
-{
-  "news": [
-    {
-      "title": "S&P 500 hits record high...",
-      "source": "Reuters",
-      "url": "https://reuters.com/...",
-      "published_at": "2025-04-12T21:30:00Z",
-      "summary": "..."
-    },
-    ...
-  ],
-  "count": 3
+for (let i = 0; i < Math.min(NEWS_COUNT, items.length); i++) {
+  const item = items[i].json;
+  newsItems.push({
+    title: item.title || '제목 없음',
+    summary: item.contentSnippet || item.description || '',
+    url: item.link || '',
+    published: item.pubDate || new Date().toISOString(),
+    source: 'Reuters'
+  });
 }
-```
 
-#### Node 9: Deduplication Check
-
-```
-Type: HTTP Request (NestJS Internal API)
-Method: GET
-URL: https://api.usstockstory.com/api/internal/recent-sources?days=7
-
-Header:
-X-N8N-Secret: {{$env.N8N_SHARED_SECRET}}
-
-Output:
-{
-  "sources": [
-    { "url": "https://reuters.com/...", "crawled_at": "2025-04-12T08:00:00Z" },
-    ...
-  ]
+if (newsItems.length === 0) {
+  throw new Error('수집된 뉴스가 없습니다. RSS 피드를 확인하세요.');
 }
+
+return [{
+  json: {
+    post_type: POST_TYPE,
+    news: newsItems,
+    news_count: newsItems.length,
+    collected_at: new Date().toISOString()
+  }
+}];
 ```
 
-#### Node 10: Filter Duplicates
+---
+
+### Node 4: Claude API 호출 (HTTP Request)
 
 ```
-Type: Execute Code (JavaScript)
-
-Input: {news, sources}
-
-Code:
-const existingUrls = new Set($input.all()[1].sources.map(s => s.url));
-
-const uniqueNews = $input.all()[0].news.filter(item => 
-  !existingUrls.has(item.url)
-);
-
-return {
-  "news": uniqueNews,
-  "original_count": $input.all()[0].count,
-  "filtered_count": uniqueNews.length,
-  "duplicates_removed": $input.all()[0].count - uniqueNews.length
-};
-
-Output:
-{
-  "news": [...3 unique items...],
-  "original_count": 3,
-  "filtered_count": 3,
-  "duplicates_removed": 0
-}
-```
-
-#### Node 11: Claude API Call
-
-```
-Type: HTTP Request
 Method: POST
 URL: https://api.anthropic.com/v1/messages
+```
 
-Headers:
+**Headers:**
+```
 Content-Type: application/json
-x-api-key: {{$env.ANTHROPIC_API_KEY}}
+x-api-key: [ANTHROPIC_API_KEY]
 anthropic-version: 2023-06-01
+```
 
-Body:
+**Body (JSON):**
+
+#### 아침 프리마켓용 System Prompt (`01-morning`):
+```json
 {
-  "model": "claude-3-5-sonnet-20241022",
-  "max_tokens": 1000,
-  "system": "{{$env.CLAUDE_SYSTEM_PROMPT_MORNING}}",
+  "model": "claude-haiku-4-5-20251001",
+  "max_tokens": 2000,
+  "system": "당신은 한국 개인 투자자를 위한 미국 프리마켓 브리핑 전문가입니다. 매일 아침 미국 시장 개장 전 주요 뉴스를 분석하여 한국 투자자가 오늘 무엇에 주목해야 하는지 안내합니다. 반드시 JSON 형식으로만 응답하세요.",
   "messages": [
     {
       "role": "user",
-      "content": "{{$json.user_prompt}}"
+      "content": "={{ '오늘 아침 프리마켓 브리핑을 작성해주세요.\n\n최신 뉴스:\n' + JSON.stringify($json.news, null, 2) + '\n\n아래 JSON 형식으로만 응답 (다른 설명 없이):\n{\n  \"title\": \"[오늘 날짜] 미국 프리마켓 브리핑: [핵심 키워드]\",\n  \"slug\": \"morning-briefing-' + new Date().toISOString().slice(0,10) + '\",\n  \"excerpt\": \"오늘 주목해야 할 미국 주식 시장 동향 (100-150자)\",\n  \"content_md\": \"## 오늘의 핵심 뉴스\\n\\n[마크다운 본문 500자 이상]\",\n  \"tags\": [\"프리마켓\", \"미국주식\", \"시장동향\"],\n  \"category_slug\": \"시장동향\"\n}' }}"
     }
   ]
 }
-
-// user_prompt은 Node에서 동적 생성
-// 생성 시점: Node 11 전에 Execute Code 노드에서 생성
 ```
 
-#### Node 11-1 (Node 11 전): Generate User Prompt
-
-```
-Type: Execute Code (JavaScript)
-
-Input: {post_type, news}
-
-Code:
-const newsJson = JSON.stringify($input.all()[0].news, null, 2);
-
-const userPrompt = `[발행 유형: morning]
-[발행 시간: 2025-04-13T08:00:00+09:00]
-
-다음은 최신 미국 금융 뉴스입니다. 아침 프리마켓 브리핑 포스트를 작성해주세요.
-
-## 크롤링된 뉴스 헤드라인
-
-${newsJson}
-
-## 출력 형식
-
-반드시 다음의 JSON 형식으로만 응답하세요:
+#### 오후 심층분석용 System Prompt (`02-afternoon`):
+```json
 {
-  "title": "...",
-  "slug": "...",
-  "excerpt": "...",
-  "content_md": "...",
-  "tags": [...],
-  "category_slug": "시장동향"
-}`;
-
-return { "user_prompt": userPrompt };
-```
-
-#### Node 12: Parse Claude Response
-
-```
-Type: Execute Code (JavaScript)
-
-Input: Claude API response (raw text in content[0].text)
-
-Code:
-const responseText = $input.all()[0].content[0].text;
-
-// JSON 추출 (```json ... ``` 형식 대비)
-const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-if (!jsonMatch) {
-  throw new Error("No JSON found in Claude response");
-}
-
-const parsed = JSON.parse(jsonMatch[0]);
-
-return {
-  "title": parsed.title,
-  "slug": parsed.slug,
-  "excerpt": parsed.excerpt,
-  "content_md": parsed.content_md,
-  "tags": parsed.tags,
-  "category_slug": parsed.category_slug,
-  "raw_response": responseText
-};
-```
-
-#### Node 13: Validation
-
-```
-Type: Execute Code (JavaScript)
-
-Input: Parsed Claude response
-
-Code:
-const post = $input.all()[0];
-const errors = [];
-
-// 필드 존재 확인
-if (!post.title) errors.push("title is required");
-if (!post.slug) errors.push("slug is required");
-if (!post.excerpt) errors.push("excerpt is required");
-if (!post.content_md) errors.push("content_md is required");
-if (!Array.isArray(post.tags) || post.tags.length < 3) 
-  errors.push("tags must be array with 3-5 items");
-if (!post.category_slug) errors.push("category_slug is required");
-
-// 길이 검증
-if (post.title.length < 40 || post.title.length > 60)
-  errors.push("title must be 40-60 characters");
-if (post.excerpt.length < 100 || post.excerpt.length > 150)
-  errors.push("excerpt must be 100-150 characters");
-
-// 카테고리 검증
-const validCategories = ["종목분석", "시장동향", "etf-분석", "실적발표", "투자전략"];
-if (!validCategories.includes(post.category_slug))
-  errors.push("invalid category");
-
-if (errors.length > 0) {
-  throw new Error(`Validation failed: ${errors.join(", ")}`);
-}
-
-return { "valid": true, "post": post };
-```
-
-#### Node 14: NestJS Publish API
-
-```
-Type: HTTP Request
-Method: POST
-URL: https://api.usstockstory.com/api/internal/posts/publish
-
-Headers:
-X-N8N-Secret: {{$env.N8N_SHARED_SECRET}}
-Content-Type: application/json
-
-Body:
-{
-  "title": "{{$json.post.title}}",
-  "slug": "{{$json.post.slug}}",
-  "excerpt": "{{$json.post.excerpt}}",
-  "content_md": "{{$json.post.content_md}}",
-  "category_slug": "{{$json.post.category_slug}}",
-  "tags": {{JSON.stringify($json.post.tags)}},
-  "is_ai_generated": true,
-  "n8n_execution_id": "{{$execution.id}}",
-  "crawled_urls": {{JSON.stringify($input.all()[0].news.map(n => n.url))}},
-  "claude_model": "claude-3-5-sonnet-20241022",
-  "claude_prompt_tokens": 450,
-  "claude_completion_tokens": 320
-}
-
-Response Handling:
-- Success (201): 포스트 발행 완료
-- Error (400): Node 15-Error로 진행
-```
-
-#### Node 15: ISR Revalidation
-
-```
-Type: HTTP Request
-Method: POST
-URL: https://api.usstockstory.com/api/internal/revalidate
-
-Headers:
-X-N8N-Secret: {{$env.N8N_SHARED_SECRET}}
-
-Body:
-{
-  "paths": [
-    "/",
-    "/post/{{$json.slug}}",
-    "/시장동향"
+  "model": "claude-haiku-4-5-20251001",
+  "max_tokens": 2000,
+  "system": "당신은 미국 주식 종목 분석 전문가입니다. 뉴스를 바탕으로 특정 종목이나 섹터의 심층 분석 콘텐츠를 작성합니다. 한국 투자자의 관점에서 실용적인 인사이트를 제공하세요. 반드시 JSON 형식으로만 응답하세요.",
+  "messages": [
+    {
+      "role": "user",
+      "content": "={{ '오늘 오후 종목 심층분석을 작성해주세요.\n\n관련 뉴스:\n' + JSON.stringify($json.news, null, 2) + '\n\n아래 JSON 형식으로만 응답:\n{\n  \"title\": \"[종목명] 심층분석: [핵심 키워드]\",\n  \"slug\": \"afternoon-analysis-' + new Date().toISOString().slice(0,10) + '\",\n  \"excerpt\": \"오늘 주목할 미국 주식 종목 분석 (100-150자)\",\n  \"content_md\": \"## 종목 분석\\n\\n[마크다운 본문 500자 이상]\",\n  \"tags\": [\"종목분석\", \"미국주식\", \"투자전략\"],\n  \"category_slug\": \"종목분석\"\n}' }}"
+    }
   ]
 }
 ```
 
-#### Node 16: Discord Notification (Success)
+#### 저녁 마감 리캡용 System Prompt (`03-evening`):
+```json
+{
+  "model": "claude-haiku-4-5-20251001",
+  "max_tokens": 2000,
+  "system": "당신은 미국 증시 마감 분석 전문가입니다. 하루 시장을 총정리하고 내일 전략을 제시합니다. 한국 투자자가 내일 어떻게 대응해야 할지 명확한 방향을 제시하세요. 반드시 JSON 형식으로만 응답하세요.",
+  "messages": [
+    {
+      "role": "user",
+      "content": "={{ '오늘 미국 증시 마감 리캡을 작성해주세요.\n\n오늘 뉴스:\n' + JSON.stringify($json.news, null, 2) + '\n\n아래 JSON 형식으로만 응답:\n{\n  \"title\": \"[날짜] 미국 증시 마감: [핵심 키워드]\",\n  \"slug\": \"evening-recap-' + new Date().toISOString().slice(0,10) + '\",\n  \"excerpt\": \"오늘 미국 증시 마감 총정리와 내일 전략 (100-150자)\",\n  \"content_md\": \"## 오늘 시장 총정리\\n\\n[마크다운 본문 500자 이상]\",\n  \"tags\": [\"마감리캡\", \"미국증시\", \"내일전략\"],\n  \"category_slug\": \"시장동향\"\n}' }}"
+    }
+  ]
+}
+```
+
+---
+
+### Node 5: 응답 JSON 파싱 (Code Node)
+
+```javascript
+// Claude 응답에서 JSON 추출
+const response = $input.first().json;
+const responseText = response.content[0].text;
+
+console.log('Claude 원본 응답:', responseText.substring(0, 500));
+
+// JSON 블록 추출 (```json ... ``` 형식 포함 대응)
+let jsonText = responseText;
+
+// 마크다운 코드 블록 제거
+const codeBlockMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+if (codeBlockMatch) {
+  jsonText = codeBlockMatch[1];
+}
+
+// JSON 객체 추출
+const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+if (!jsonMatch) {
+  throw new Error('JSON을 찾을 수 없습니다. Claude 응답: ' + responseText.substring(0, 300));
+}
+
+let post;
+try {
+  post = JSON.parse(jsonMatch[0]);
+} catch (e) {
+  throw new Error('JSON 파싱 실패: ' + e.message);
+}
+
+// 필수 필드 검증
+const required = ['title', 'slug', 'excerpt', 'content_md', 'tags', 'category_slug'];
+const missing = required.filter(f => !post[f]);
+if (missing.length > 0) {
+  throw new Error('필수 필드 누락: ' + missing.join(', '));
+}
+
+// tags가 배열인지 확인
+if (!Array.isArray(post.tags)) {
+  post.tags = [post.tags];
+}
+
+console.log('파싱된 포스트 제목:', post.title);
+
+return [{ json: post }];
+```
+
+---
+
+### Node 6: 포스트 발행 API (HTTP Request)
 
 ```
-Type: HTTP Request
 Method: POST
-URL: {{$env.DISCORD_WEBHOOK_URL}}
+URL: https://api.bigtrust.site/api/posts/internal/publish
+```
 
-Body (JSON):
+**Headers:**
+```
+Content-Type: application/json
+X-N8N-Secret: [Railway의 N8N_SECRET_KEY 값]
+```
+
+**Body (JSON):**
+```json
 {
-  "content": "",
+  "title": "={{ $json.title }}",
+  "slug": "={{ $json.slug }}",
+  "excerpt": "={{ $json.excerpt }}",
+  "content_md": "={{ $json.content_md }}",
+  "category_slug": "={{ $json.category_slug }}",
+  "tags": "={{ $json.tags }}",
+  "is_ai_generated": true,
+  "status": "published"
+}
+```
+
+**응답 확인:**
+- `201 Created` → 성공
+- `401 Unauthorized` → X-N8N-Secret 값 오류
+- `500 Internal Server Error` → 데이터베이스 연결 오류 (Railway MySQL 확인)
+
+---
+
+### Node 7: ISR 캐시 갱신 (HTTP Request)
+
+```
+Method: POST
+URL: https://bigtrust.site/api/revalidate
+```
+
+**Headers:**
+```
+Content-Type: application/json
+x-revalidate-secret: [Railway의 REVALIDATE_SECRET 값]
+```
+
+**Body (JSON):**
+```json
+{
+  "paths": ["/", "/stock-analysis", "/{{ $json.category_slug }}"]
+}
+```
+
+---
+
+### Node 8: Discord 알림 (HTTP Request, 선택사항)
+
+```
+Method: POST
+URL: [Discord 웹훅 URL]
+```
+
+**Body (JSON):**
+```json
+{
+  "username": "bigtrust.site 봇",
   "embeds": [
     {
-      "title": "✅ 포스트 자동 발행 완료",
-      "description": "{{$json.title}}",
+      "title": "✅ 새 포스트 발행 완료",
+      "description": "={{ $json.title }}",
       "color": 5763719,
       "fields": [
         {
           "name": "카테고리",
-          "value": "{{$json.category_slug}}",
+          "value": "={{ $json.category_slug }}",
           "inline": true
         },
         {
           "name": "태그",
-          "value": "{{$json.tags.join(', ')}}",
+          "value": "={{ $json.tags.join(', ') }}",
           "inline": true
         },
         {
-          "name": "URL",
-          "value": "https://usstockstory.com/post/{{$json.slug}}",
+          "name": "포스트 링크",
+          "value": "https://bigtrust.site/post/={{ $json.slug }}",
           "inline": false
-        },
-        {
-          "name": "시간",
-          "value": "{{new Date().toLocaleString('ko-KR')}}",
-          "inline": true
         }
-      ]
+      ],
+      "timestamp": "={{ new Date().toISOString() }}"
     }
   ]
 }
 ```
 
-#### Node 17: Logging
+---
 
+## 4. n8n 환경 변수 설정 (Free 플랜)
+
+> ⚠️ n8n 무료 플랜은 Variables 기능이 없습니다.  
+> **각 노드에 값을 직접 입력**해야 합니다.
+
+| 사용 위치 | 값 | 어디서 확인? |
+|-----------|-----|-------------|
+| Node 4 Header (x-api-key) | Claude API 키 | Anthropic Console |
+| Node 6 Header (X-N8N-Secret) | N8N_SECRET_KEY | Railway Variables |
+| Node 7 Header (x-revalidate-secret) | REVALIDATE_SECRET | Railway Variables |
+| Node 8 URL | Discord 웹훅 URL | Discord 채널 설정 |
+
+---
+
+## 5. 에러 대응 가이드
+
+### RSS 피드 오류 (Node 2)
 ```
-Type: HTTP Request
-Method: POST
-URL: https://api.usstockstory.com/api/internal/ai-logs
-
-Headers:
-X-N8N-Secret: {{$env.N8N_SHARED_SECRET}}
-
-Body:
-{
-  "post_id": "{{$json.post_id}}",
-  "n8n_execution_id": "{{$execution.id}}",
-  "status": "success",
-  "crawled_urls": {{JSON.stringify($input.all()[0].urls)}},
-  "claude_model": "claude-3-5-sonnet-20241022",
-  "claude_prompt_tokens": 450,
-  "claude_completion_tokens": 320,
-  "error_message": null
-}
-```
-
-#### Node 18: Error Handler
-
-```
-Type: Notification / HTTP Request (Discord - Error)
-
-Trigger: On any node failure
-
-Body:
-{
-  "content": "",
-  "embeds": [
-    {
-      "title": "❌ 포스트 자동 발행 실패",
-      "description": "{{$error.message}}",
-      "color": 15158332,
-      "fields": [
-        {
-          "name": "n8n 실행 ID",
-          "value": "{{$execution.id}}",
-          "inline": false
-        },
-        {
-          "name": "실패한 노드",
-          "value": "{{$error.node}}",
-          "inline": true
-        },
-        {
-          "name": "시간",
-          "value": "{{new Date().toLocaleString('ko-KR')}}",
-          "inline": true
-        },
-        {
-          "name": "상세 에러",
-          "value": "```\n{{$error.message}}\n```",
-          "inline": false
-        }
-      ]
-    }
-  ]
-}
+증상: "Cannot read property 'items' of undefined"
+원인: RSS 피드 URL이 변경되거나 일시 장애
+해결: 다른 RSS 피드 URL로 교체
+     Reuters 대안: https://feeds.finance.yahoo.com/rss/2.0/headline
 ```
 
-#### Logging (Error)
+### Claude API 오류 (Node 4)
 ```
-POST /api/internal/ai-logs
+증상: 401 Unauthorized
+원인: API 키 오류 또는 만료
+해결: Anthropic Console에서 새 API 키 발급
 
-Body:
-{
-  "post_id": null,
-  "n8n_execution_id": "{{$execution.id}}",
-  "status": "failed",
-  "crawled_urls": [],
-  "claude_model": "claude-3-5-sonnet-20241022",
-  "claude_prompt_tokens": 0,
-  "claude_completion_tokens": 0,
-  "error_message": "{{$error.message}}"
-}
+증상: 429 Too Many Requests
+원인: API 한도 초과
+해결: Anthropic 플랜 확인, 잠시 후 재시도
+```
+
+### 포스트 발행 오류 (Node 6)
+```
+증상: 401 Unauthorized
+원인: N8N_SECRET_KEY 불일치
+해결: Railway Variables의 N8N_SECRET_KEY 값과 n8n의 값이 동일한지 확인
+
+증상: 500 Internal Server Error
+원인: 데이터베이스 연결 실패
+해결:
+  1. Railway Dashboard → 프로젝트 → Logs 확인
+  2. MySQL 플러그인이 연결되어 있는지 확인
+  3. DATABASE_URL 환경 변수가 올바른지 확인
+```
+
+### ISR 갱신 오류 (Node 7)
+```
+증상: 401 Unauthorized
+원인: REVALIDATE_SECRET 불일치
+해결: Railway Variables의 REVALIDATE_SECRET 값과 n8n 값 동일하게 수정
 ```
 
 ---
 
-### 2.2 워크플로우 #2: 점심 심층분석 (14:00 KST)
+## 6. 유효한 카테고리 슬러그
 
-**이름**: `Stock Blog - Afternoon Analysis (14:00)`
-**Cron**: `0 14 * * *`
+Claude에게 이 중 하나만 사용하도록 프롬프트에 명시하세요.
 
-**차이점**:
-- Node 2 Context: `post_type: "afternoon"`, `context: "Specific stock/ETF deep analysis"`
-- Node 8: 뉴스 5개 선택 (점심은 깊이 있는 분석, 아침보다 더 많은 정보)
-- Claude System Prompt: `CLAUDE_SYSTEM_PROMPT_AFTERNOON` (깊이 있는 분석)
-- Node 16 Discord: "📊 종목 심층분석" 타이틀
-
-**동일한 구조**: Node 1~18 동일 로직, 파라미터만 변경
-
----
-
-### 2.3 워크플로우 #3: 저녁 마감 리캡 (22:00 KST)
-
-**이름**: `Stock Blog - Evening Recap (22:00)`
-**Cron**: `0 22 * * *`
-
-**차이점**:
-- Node 2 Context: `post_type: "evening"`, `context: "US market close recap + tomorrow strategy"`
-- Node 8: 뉴스 5개 (종합 분석)
-- Claude System Prompt: `CLAUDE_SYSTEM_PROMPT_EVENING` (종합적이고 다음날 전략)
-- Node 16 Discord: "📈 마감 리캡" 타이틀
+| 슬러그 | 한국어 이름 |
+|--------|------------|
+| `종목분석` | 종목 분석 |
+| `시장동향` | 시장 동향 |
+| `etf-분석` | ETF 분석 |
+| `실적발표` | 실적 발표 |
+| `투자전략` | 투자 전략 |
 
 ---
 
-## 3. RSS 피드 목록 및 설정
+## 7. 테스트 체크리스트
 
-### 3.1 권장 RSS 피드
+워크플로우 활성화 전 반드시 테스트하세요.
 
-| 피드 | URL | 업데이트 빈도 | 선호도 |
-|---|---|---|---|
-| Reuters Business | `https://feeds.reuters.com/reuters/businessNews` | 실시간 | ⭐⭐⭐⭐⭐ |
-| MarketWatch | `https://feeds.marketwatch.com/marketwatch/topstories/` | 5분 | ⭐⭐⭐⭐⭐ |
-| CNBC | `https://feeds.cnbc.com/cnbc/intl/world/` | 실시간 | ⭐⭐⭐⭐ |
-| Seeking Alpha | `https://feeds.seekingalpha.com/feed.xml` | 10분 | ⭐⭐⭐⭐ |
-| Investing.com | `https://feeds.investing.com/feeds/news_301.xml` | 5분 | ⭐⭐⭐ |
-| Yahoo Finance | `https://feeds.finance.yahoo.com/` | 실시간 | ⭐⭐⭐ |
-| Wall Street Journal | `https://feeds.wsj.com/xml/rss/3_7085.xml` | 10분 | ⭐⭐⭐ |
-
-### 3.2 RSS 파싱 설정
-
-```javascript
-// n8n Execute Code에서 RSS 파싱
-const parser = require('rss-parser');
-const feed = await parser.parseURL(rss_url);
-
-return {
-  "title": feed.items[0].title,
-  "source": feed.title,
-  "url": feed.items[0].link,
-  "published_at": feed.items[0].pubDate,
-  "summary": feed.items[0].content || feed.items[0].contentSnippet
-};
-```
-
----
-
-## 4. 환경 변수 (n8n)
-
-```bash
-# Claude API
-ANTHROPIC_API_KEY=sk-ant-...
-
-# System Prompts (3개)
-CLAUDE_SYSTEM_PROMPT_MORNING="당신은 미국 주식 시장 전문가입니다... [아침 설정]"
-CLAUDE_SYSTEM_PROMPT_AFTERNOON="당신은 종목 분석 전문가입니다... [점심 설정]"
-CLAUDE_SYSTEM_PROMPT_EVENING="당신은 시장 해설가입니다... [저녁 설정]"
-
-# NestJS API
-N8N_SHARED_SECRET=your-shared-secret-key
-NESTJS_API_BASE_URL=https://api.usstockstory.com
-
-# 알림
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
-TELEGRAM_BOT_TOKEN=123456:ABC...
-TELEGRAM_CHAT_ID=-987654
-
-# 기타
-LOG_LEVEL=info
-RETRY_ATTEMPTS=3
-RETRY_DELAY=5000
-```
-
----
-
-## 5. 에러 시나리오 및 대응
-
-### 5.1 RSS 피드 다운로드 실패
-
-```
-→ 다른 피드 시도 (5개 중 3개 성공하면 진행)
-→ 모두 실패 시 Discord 알림: "RSS 크롤링 실패"
-```
-
-### 5.2 Claude API 타임아웃
-
-```
-→ 재시도 (3회, 5초 간격)
-→ 계속 실패 시 ai_post_logs: status="failed", error="Claude API timeout"
-→ 관리자 수동 개입
-```
-
-### 5.3 NestJS API 에러 (400/500)
-
-```
-→ 응답 로깅
-→ Discord 알림: "NestJS API 에러: [상태 코드] [에러 메시지]"
-→ ai_post_logs에 상세 기록
-```
-
-### 5.4 JSON 검증 실패
-
-```
-→ Claude에게 "JSON 형식 오류, 다시 작성해주세요" 메시지 전송
-→ 재시도 1회
-→ 계속 실패 시 status="review_needed" → 관리자 검토 필요
-```
-
----
-
-## 6. 성능 최적화
-
-### 6.1 병렬 RSS 페칭
-
-5개의 RSS 피드를 동시에 요청 (직렬이 아닌 병렬):
-- Node 3~7을 병렬 실행
-- 평균 응답 시간: 3~5초 (직렬이면 15~25초)
-
-### 6.2 캐싱
-
-- 중복 검사 (최근 7일 소스): Redis 캐시 활용
-- Claude 응답: 캐시 안 함 (항상 신규 생성)
-
-### 6.3 토큰 절약
-
-- System Prompt: 재사용 (캐싱됨)
-- 뉴스 요약: 짧은 요약 사용 (토큰 절약)
-- 응답 토큰 제한: `max_tokens=1000`
-
----
-
-## 7. 모니터링 대시보드 (권장)
-
-n8n UI에서:
-- 각 워크플로우 실행 히스토리 확인
-- 평균 실행 시간 추적
-- 에러율 모니터링
-
-ai_post_logs 테이블에서:
-- 성공률 계산: success / total
-- 토큰 사용량 추적
-- 실행 시간 분석
+- [ ] Node 2: RSS 피드에서 뉴스 수집 확인
+- [ ] Node 3: 뉴스 파싱 및 JSON 구조 확인
+- [ ] Node 4: Claude API 응답 확인 (JSON 형식)
+- [ ] Node 5: title, slug, content_md 파싱 확인
+- [ ] Node 6: `201 Created` 응답 확인
+- [ ] Node 7: `{"revalidated": true}` 응답 확인
+- [ ] bigtrust.site 접속 → 새 포스트 표시 확인
