@@ -21,7 +21,7 @@
     "seed:fresh": "npm run migration:revert && npm run migration:run && npm run seed"
   },
   "dependencies": {
-    "@napi-rs/canvas": "^0.1.45",
+    "@napi-rs/canvas": "^0.1.97",
     "@nestjs/common": "^10.2.0",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^10.2.0",
