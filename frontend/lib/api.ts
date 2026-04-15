@@ -7,7 +7,7 @@
 import { ApiResponse, Post, Category, Tag, LoginResponse, QueryParams, MarketIndex } from './types';
 import { STORAGE_KEYS } from './constants';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'https://api.bigtrust.site';
 
 // JWT 토큰 관리 (클라이언트 전용)
 const getAuthToken = (): string | null => {
@@ -46,6 +46,7 @@ async function fetchAPI<T>(
   const response = await fetch(url, {
     ...options,
     headers,
+    cache: 'no-store',
   });
 
   if (!response.ok) {
