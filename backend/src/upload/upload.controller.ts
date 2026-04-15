@@ -52,12 +52,12 @@ export class UploadController {
     const r2Bucket = process.env.R2_BUCKET || 'bigtrust-thumbnails';
     const r2PublicUrl = process.env.R2_PUBLIC_URL;
 
-    if (!r2AccountId || !r2AccessKey || !r2Secret) {
+    if (!r2AccountId || !r2AccessKey || !r2Secret || !r2PublicUrl) {
       console.warn('⚠️ R2 환경 변수가 설정되지 않았습니다');
       return {
         url: null,
         message: 'R2 스토리지가 설정되지 않았습니다. 이미지 URL을 직접 입력해주세요.',
-        instruction: '관리자: Cloudflare R2 설정 필요 (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY)',
+        instruction: '관리자: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_PUBLIC_URL 설정 필요',
       };
     }
 
