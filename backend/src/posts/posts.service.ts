@@ -261,7 +261,7 @@ export class PostsService {
         category = this.categoryRepository.create({ id: uuidv4(), slug: categoryIdentifier, name_ko: categoryIdentifier, description: '' });
         await this.categoryRepository.save(category);
       }
-      updatePostDto.category_id = category.id;
+      post.category_id = category.id;
     }
 
     // slug 중복 확인 (수정 시)
@@ -301,7 +301,16 @@ export class PostsService {
       }
     }
 
-    Object.assign(post, updatePostDto);
+    // 각 필드를 개별적으로 업데이트 (관계는 이미 처리됨)
+    if (updatePostDto.title !== undefined) post.title = updatePostDto.title;
+    if (updatePostDto.slug !== undefined) post.slug = updatePostDto.slug;
+    if (updatePostDto.excerpt !== undefined) post.excerpt = updatePostDto.excerpt;
+    if (updatePostDto.content_md !== undefined) post.content_md = updatePostDto.content_md;
+    if (updatePostDto.content_html !== undefined) post.content_html = updatePostDto.content_html;
+    if (updatePostDto.reading_time_mins !== undefined) post.reading_time_mins = updatePostDto.reading_time_mins;
+    if (updatePostDto.cover_image_url !== undefined) post.cover_image_url = updatePostDto.cover_image_url;
+    if (updatePostDto.ai_source_urls !== undefined) post.ai_source_urls = updatePostDto.ai_source_urls;
+
     await this.postRepository.save(post);
     return this.findById(id);
   }

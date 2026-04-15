@@ -66,11 +66,14 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
       if (data.url) {
         setCoverImageUrl(data.url);
         setMsg('✅ 이미지 업로드 완료');
+      } else if (data.message) {
+        // R2 미설정 등의 사유
+        setMsg(`⚠️ ${data.message} 이미지 URL을 직접 입력하거나 외부 이미지를 사용해주세요.`);
       } else {
-        setMsg('❌ 업로드 실패: ' + (data.message || ''));
+        setMsg('❌ 업로드 실패: ' + (data.error?.message || '알 수 없는 오류'));
       }
     } catch (e) {
-      setMsg('❌ 업로드 실패');
+      setMsg('❌ 업로드 실패: 네트워크 연결을 확인하세요');
     } finally {
       setUploading(false);
     }

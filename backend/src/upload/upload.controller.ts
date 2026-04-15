@@ -6,11 +6,13 @@ import {
   UseInterceptors,
   BadRequestException,
   InternalServerErrorException,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiConsumes } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
 import * as AWS from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
+import { JwtGuard } from '@/auth/guards/jwt.guard';
 
 @ApiTags('Upload')
 @Controller('upload')
@@ -26,7 +28,9 @@ export class UploadController {
     };
   }
 
+  @UseGuards(JwtGuard)
   @Post('image')
+  @ApiBearerAuth()
   @ApiOperation({ summary: '이미지 R2 업로드' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
@@ -49,7 +53,12 @@ export class UploadController {
     const r2PublicUrl = process.env.R2_PUBLIC_URL;
 
     if (!r2AccountId || !r2AccessKey || !r2Secret) {
-      throw new BadRequestException('R2 환경 변수가 설정되지 않았습니다 (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY)');
+      console.warn('⚠️ R2 환경 변수가 설정되지 않았습니다');
+      return {
+        url: null,
+        message: 'R2 스토리지가 설정되지 않았습니다. 이미지 URL을 직접 입력해주세요.',
+        instruction: '관리자: Cloudflare R2 설정 필요 (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY)',
+      };
     }
 
     const ext = file.originalname.split('.').pop() || 'jpg';
