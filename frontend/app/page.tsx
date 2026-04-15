@@ -67,7 +67,7 @@ export default async function Home() {
       {categories.length > 0 && (
         <div className="space-y-12">
           {categories.slice(0, 5).map((category) => {
-            const categoryPosts = posts.filter((p) => p.category.id === category.id);
+            const categoryPosts = posts.filter((p) => p.category?.id === category.id);
             return (
               <CategorySection
                 key={category.id}

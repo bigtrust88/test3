@@ -71,7 +71,7 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   const categoryRelatedPosts = relatedPosts.filter(
-    (p) => p.category.id === post.category.id,
+    (p) => p.category?.id === post.category?.id,
   );
 
   return (
@@ -84,7 +84,7 @@ export default async function PostPage({ params }: PostPageProps) {
         {/* 메인 */}
         <div className="lg:col-span-2 space-y-8">
           {/* 본문 */}
-          <PostContent content={post.content_html} title={post.title} />
+          <PostContent content={post.content_html} title={post.title} coverImageUrl={post.cover_image_url} />
 
           {/* 광고 - 본문 하단 */}
           <AdUnit slot="9205887899" format="auto" />

@@ -60,11 +60,13 @@ export const PostCard = React.forwardRef<HTMLDivElement, PostCardProps>(
           {/* 내용 */}
           <div className="p-4">
             {/* 카테고리 */}
-            <div className="mb-3">
-              <Badge variant="primary" size="sm">
-                {post.category.name_ko}
-              </Badge>
-            </div>
+            {post.category?.name_ko && (
+              <div className="mb-3">
+                <Badge variant="primary" size="sm">
+                  {post.category.name_ko}
+                </Badge>
+              </div>
+            )}
 
             {/* 제목 */}
             <h3 className="text-lg font-semibold mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">

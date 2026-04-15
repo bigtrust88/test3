@@ -3,7 +3,6 @@
  * 포스트 상세 헤더 (이미지, 제목, 메타데이터)
  */
 
-import Image from 'next/image';
 import { Post } from '@/lib/types';
 import { Badge } from './ui/Badge';
 
@@ -64,18 +63,7 @@ export function PostHeader({ post }: PostHeaderProps) {
         </div>
       )}
 
-      {/* 커버 이미지 */}
-      {post.cover_image_url && (
-        <div className="relative w-full h-96 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800">
-          <Image
-            src={post.cover_image_url}
-            alt={post.title}
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
-      )}
+      {/* 커버 이미지는 PostContent 상단에 표시됨 */}
     </div>
   );
 }
