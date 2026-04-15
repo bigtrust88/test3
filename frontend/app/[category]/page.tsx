@@ -3,8 +3,8 @@
  * Dynamic route: /[category]/
  */
 
-// ISR: 5분마다 재검증, 또는 On-demand ISR로 즉시 갱신
-export const revalidate = 300;
+// 항상 최신 데이터 가져오기 (SSR 모드)
+export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
 import { LatestPostsGrid } from '@/components/LatestPostsGrid';

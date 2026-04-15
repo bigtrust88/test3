@@ -349,13 +349,23 @@ export class PostsService {
     if (updatePostDto.title !== undefined) post.title = updatePostDto.title;
     if (updatePostDto.slug !== undefined) post.slug = updatePostDto.slug;
     if (updatePostDto.excerpt !== undefined) post.excerpt = updatePostDto.excerpt;
-    if (updatePostDto.content_md !== undefined) post.content_md = updatePostDto.content_md;
+    if (updatePostDto.content_md !== undefined) {
+      post.content_md = updatePostDto.content_md;
+      // content_html이 명시적으로 제공되지 않으면 content_md로 자동 재생성
+      if (updatePostDto.content_html === undefined) {
+        post.content_html = await MarkdownUtil.toHtml(updatePostDto.content_md);
+      }
+    }
     if (updatePostDto.content_html !== undefined) post.content_html = updatePostDto.content_html;
     if (updatePostDto.reading_time_mins !== undefined) post.reading_time_mins = updatePostDto.reading_time_mins;
     if (updatePostDto.cover_image_url !== undefined) post.cover_image_url = updatePostDto.cover_image_url;
     if (updatePostDto.ai_source_urls !== undefined) post.ai_source_urls = updatePostDto.ai_source_urls;
 
     await this.postRepository.save(post);
+
+    // ISR 재검증 트리거 (수정된 포스트 캐시 무효화)
+    await this.triggerISRRevalidation(post.slug);
+
     return this.findById(id);
   }
 
