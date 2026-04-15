@@ -5,7 +5,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Post } from '@/lib/types';
 import { Badge } from './ui/Badge';
 import clsx from 'clsx';
@@ -40,11 +39,11 @@ export const PostCard = React.forwardRef<HTMLDivElement, PostCardProps>(
           {/* 이미지 */}
           <div className={clsx('relative overflow-hidden bg-gray-100 dark:bg-gray-800', featured ? 'h-64' : 'h-40')}>
             {post.cover_image_url ? (
-              <Image
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
                 src={post.cover_image_url}
                 alt={post.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
               <div className="flex items-center justify-center h-full text-gray-400">
