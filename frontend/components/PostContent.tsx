@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-
 interface PostContentProps {
   content: string;
   title: string;
@@ -11,23 +9,21 @@ interface PostContentProps {
 export function PostContent({ content, title, coverImageUrl }: PostContentProps) {
   return (
     <article className="prose dark:prose-invert max-w-none">
-      {/* 커버 이미지 - 본문 상단 */}
+      {/* 커버 이미지 - 본문 상단 (next/image 대신 img 사용: prose CSS 충돌 방지) */}
       {coverImageUrl && (
-        <div className="relative w-full h-80 mb-8 rounded-lg overflow-hidden not-prose">
-          <Image
-            src={coverImageUrl}
-            alt={title}
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={coverImageUrl}
+          alt={title}
+          className="w-full h-80 object-cover rounded-lg mb-8 not-prose"
+          style={{ display: 'block' }}
+        />
       )}
 
       {/* 본문 콘텐츠 */}
       <div
         className="space-y-4 text-gray-800 dark:text-gray-200 leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{ __html: content || '' }}
       />
     </article>
   );
