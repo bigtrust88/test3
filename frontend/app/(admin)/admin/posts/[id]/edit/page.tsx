@@ -6,7 +6,13 @@ import { Button } from '@/components/ui/Button';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-const CATEGORIES = ['종목분석', '시장동향', '실적발표', 'etf-분석', '투자전략'];
+const CATEGORIES = [
+  { slug: 'stock-analysis', name: '종목분석' },
+  { slug: 'market-trend', name: '시장동향' },
+  { slug: 'earnings', name: '실적발표' },
+  { slug: 'etf-analysis', name: 'ETF분석' },
+  { slug: 'investment-strategy', name: '투자전략' },
+];
 
 export default function EditPostPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -20,7 +26,7 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [contentMd, setContentMd] = useState('');
-  const [categorySlug, setCategorySlug] = useState('시장동향');
+  const [categorySlug, setCategorySlug] = useState('market-trend');
   const [tags, setTags] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [isPublished, setIsPublished] = useState(true);
@@ -36,7 +42,7 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
         setTitle(post.title || '');
         setExcerpt(post.excerpt || '');
         setContentMd(post.content_md || '');
-        setCategorySlug(post.category?.slug || '시장동향');
+        setCategorySlug(post.category?.slug || 'market-trend');
         setTags((post.tags || []).map((t: any) => t.name).join(', '));
         setCoverImageUrl(post.cover_image_url || '');
         setIsPublished(post.is_published ?? true);
@@ -163,7 +169,7 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
             onChange={e => setCategorySlug(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            {CATEGORIES.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}
           </select>
         </div>
         <div>
