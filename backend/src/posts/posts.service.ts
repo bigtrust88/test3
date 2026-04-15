@@ -115,6 +115,50 @@ export class PostsService {
     return this.categoryRepository.find({ order: { name_ko: 'ASC' } });
   }
 
+  // 카테고리 초기 데이터 설정 (기존 slug 업데이트 + 누락 카테고리 추가)
+  async seedCategories() {
+    const canonical = [
+      { slug: 'stock-analysis',      name_ko: '종목분석',   aliases: ['종목분석'] },
+      { slug: 'market-trend',        name_ko: '시장동향',   aliases: ['시장동향'] },
+      { slug: 'earnings',            name_ko: '실적발표',   aliases: ['실적발표'] },
+      { slug: 'etf-analysis',        name_ko: 'ETF분석',    aliases: ['etf-분석', 'ETF분석'] },
+      { slug: 'investment-strategy', name_ko: '투자전략',   aliases: ['투자전략'] },
+    ];
+
+    const results: string[] = [];
+
+    for (const cat of canonical) {
+      // 정상 slug로 이미 존재하는지 확인
+      let existing = await this.categoryRepository.findOne({ where: { slug: cat.slug } });
+
+      if (!existing) {
+        // alias(한국어 slug)로 찾아서 slug 영어로 교체
+        for (const alias of cat.aliases) {
+          existing = await this.categoryRepository.findOne({ where: { slug: alias } });
+          if (existing) break;
+        }
+      }
+
+      if (existing) {
+        existing.slug = cat.slug;
+        existing.name_ko = cat.name_ko;
+        await this.categoryRepository.save(existing);
+        results.push(`updated: ${cat.slug}`);
+      } else {
+        const newCat = this.categoryRepository.create({
+          id: uuidv4(),
+          slug: cat.slug,
+          name_ko: cat.name_ko,
+          description: '',
+        });
+        await this.categoryRepository.save(newCat);
+        results.push(`created: ${cat.slug}`);
+      }
+    }
+
+    return results;
+  }
+
   // 태그 전체 조회 (공개)
   async findAllTags() {
     return this.tagRepository.find({ order: { name: 'ASC' } });
