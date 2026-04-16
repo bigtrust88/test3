@@ -9,29 +9,25 @@ export const dynamic = 'force-dynamic';
 import { Suspense } from 'react';
 import { AdUnit } from '@/components/AdUnit';
 import { LatestPostsGrid } from '@/components/LatestPostsGrid';
-import { CategorySection } from '@/components/CategorySection';
 import { TagCloud } from '@/components/TagCloud';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
-import { getPosts, getCategories, getTags } from '@/lib/api';
-import { CATEGORIES } from '@/lib/constants';
+import { getPosts, getTags } from '@/lib/api';
 
 async function fetchData() {
-  const [postsRes, categoriesRes, tagsRes] = await Promise.allSettled([
+  const [postsRes, tagsRes] = await Promise.allSettled([
     getPosts({ limit: 20 }),
-    getCategories(),
     getTags(),
   ]);
 
   return {
     posts: postsRes.status === 'fulfilled' ? (postsRes.value?.data || []) : [],
-    categories: categoriesRes.status === 'fulfilled' ? (categoriesRes.value?.data || []) : [],
     tags: tagsRes.status === 'fulfilled' ? (tagsRes.value?.data || []) : [],
   };
 }
 
 export default async function Home() {
-  const { posts, categories, tags } = await fetchData();
+  const { posts, tags } = await fetchData();
 
   return (
     <div className="space-y-8">
@@ -61,22 +57,6 @@ export default async function Home() {
       <Suspense fallback={<LatestPostsGrid posts={[]} isLoading={true} />}>
         <LatestPostsGrid posts={posts.slice(0, 6)} title="Latest Analysis" />
       </Suspense>
-
-      {/* Category Sections */}
-      {categories.length > 0 && (
-        <div className="space-y-12">
-          {categories.slice(0, 5).map((category) => {
-            const categoryPosts = posts.filter((p) => p.category?.id === category.id);
-            return (
-              <CategorySection
-                key={category.id}
-                category={category}
-                posts={categoryPosts.slice(0, 3)}
-              />
-            );
-          })}
-        </div>
-      )}
 
       {/* Ad */}
       <AdUnit slot="9205887899" format="horizontal" />
