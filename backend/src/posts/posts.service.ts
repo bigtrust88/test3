@@ -164,6 +164,13 @@ export class PostsService {
     return this.tagRepository.find({ order: { name: 'ASC' } });
   }
 
+  async deleteTag(id: string) {
+    const tag = await this.tagRepository.findOne({ where: { id } });
+    if (!tag) throw new Error('Tag not found');
+    await this.tagRepository.remove(tag);
+    return { deleted: true, id };
+  }
+
   // 모든 포스트 조회 (관리자용)
   async findAll(query: QueryPostsDto) {
     let { page = 1, limit = 10, category_id, category, tag_id, tag, search, is_ai_generated, sort } = query;
