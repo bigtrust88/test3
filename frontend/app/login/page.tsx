@@ -1,5 +1,5 @@
 /**
- * 로그인 페이지
+ * Login Page
  */
 
 'use client';
@@ -26,7 +26,7 @@ export default function LoginPage() {
       await login(email, password);
       router.push('/admin');
     } catch (err) {
-      setError(err instanceof Error ? err.message : '로그인에 실패했습니다');
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -35,18 +35,18 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
-        {/* 헤더 */}
+        {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">US Stock Story</h1>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            관리자 로그인
+            Admin Login
           </h2>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            당신의 계정으로 로그인하세요
+            Sign in to your account
           </p>
         </div>
 
-        {/* 폼 */}
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
             <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-800">
@@ -54,10 +54,10 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* 이메일 */}
+          {/* Email */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-2">
-              이메일
+              Email
             </label>
             <input
               id="email"
@@ -70,10 +70,10 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* 비밀번호 */}
+          {/* Password */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium mb-2">
-              비밀번호
+              Password
             </label>
             <input
               id="password"
@@ -86,16 +86,16 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* 로그인 버튼 */}
+          {/* Submit */}
           <Button type="submit" fullWidth isLoading={isLoading}>
-            로그인
+            Sign In
           </Button>
         </form>
 
-        {/* 푸터 */}
+        {/* Footer */}
         <div className="text-center">
           <Link href="/" className="text-blue-600 dark:text-blue-400 hover:underline">
-            홈으로 돌아가기
+            Back to Home
           </Link>
         </div>
       </div>

@@ -15,7 +15,7 @@ interface RelatedPostsProps {
 export function RelatedPosts({
   posts,
   currentPostId,
-  title = '관련 포스트',
+  title = 'Related Posts',
 }: RelatedPostsProps) {
   const filtered = posts.filter((p) => p.id !== currentPostId).slice(0, 3);
 

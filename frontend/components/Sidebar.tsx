@@ -24,21 +24,21 @@ export function Sidebar({ tags }: SidebarProps) {
 
       {/* 뉴스레터 구독 */}
       <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
-        <h3 className="text-lg font-bold mb-4">뉴스레터</h3>
+        <h3 className="text-lg font-bold mb-4">Newsletter</h3>
         <p className="text-sm mb-4 text-gray-700 dark:text-gray-300">
-          주간 분석 리포트를 메일로 받으세요.
+          Get weekly market analysis reports delivered to your inbox.
         </p>
         <form className="space-y-3">
           <input
             type="email"
-            placeholder="이메일 주소"
+            placeholder="Your email address"
             className="w-full px-4 py-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700"
           />
           <button
             type="submit"
             className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
           >
-            구독하기
+            Subscribe
           </button>
         </form>
       </div>

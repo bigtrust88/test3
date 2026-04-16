@@ -1,6 +1,6 @@
 /**
- * 루트 레이아웃
- * ThemeProvider 래핑, Header, Footer 공유
+ * Root Layout
+ * ThemeProvider wrapper, shared Header and Footer
  */
 
 import React from 'react';
@@ -11,15 +11,15 @@ import { Footer } from '@/components/Footer';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'US Stock Story - 미국주식 분석 블로그',
-  description: '한국 개인 투자자를 위한 미국 주식 시장 분석과 투자 전략',
+  title: 'US Stock Story - US Stock Market Analysis Blog',
+  description: 'Daily US stock market analysis, earnings breakdowns, ETF picks, and investment strategies for global investors.',
   authors: [{ name: 'US Stock Story' }],
-  keywords: ['미국주식', '투자', '분석', '마켓', '주가'],
+  keywords: ['US stocks', 'stock analysis', 'investment', 'ETF', 'earnings', 'market trend', 'S&P 500', 'NASDAQ'],
   openGraph: {
     title: 'US Stock Story',
-    description: '미국 주식 분석 및 투자 전략',
+    description: 'US stock market analysis and investment strategies',
     type: 'website',
-    locale: 'ko_KR',
+    locale: 'en_US',
     url: 'https://bigtrust.site',
     siteName: 'US Stock Story',
   },
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           async

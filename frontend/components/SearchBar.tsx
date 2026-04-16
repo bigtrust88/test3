@@ -27,7 +27,7 @@ export function SearchBar() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="검색..."
+          placeholder="Search..."
           className={`
             w-full px-4 py-2 rounded-lg
             bg-gray-100 dark:bg-gray-900
@@ -53,7 +53,7 @@ export function SearchBar() {
         </svg>
       </div>
       <Button variant="primary" size="sm" type="submit">
-        검색
+        Search
       </Button>
     </form>
   );

@@ -22,7 +22,7 @@ export function TagCloud({ tags, maxSize = 50 }: TagCloudProps) {
 
   return (
     <section className="py-8">
-      <h3 className="text-lg font-bold mb-6">태그</h3>
+      <h3 className="text-lg font-bold mb-6">Tags</h3>
       <div className="flex flex-wrap gap-3">
         {tags.map((tag) => {
           // 포스트 수에 따른 글꼴 크기 계산
@@ -36,7 +36,7 @@ export function TagCloud({ tags, maxSize = 50 }: TagCloudProps) {
               href={`/tag/${tag.slug}`}
               style={{ fontSize: `${fontSize}px`, opacity }}
               className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
-              title={`${tag.post_count}개의 포스트`}
+              title={`${tag.post_count} posts`}
             >
               #{tag.name}
             </Link>

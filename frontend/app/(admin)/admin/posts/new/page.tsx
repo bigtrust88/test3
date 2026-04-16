@@ -1,5 +1,5 @@
 /**
- * 새 포스트 작성 페이지
+ * New Post Page
  */
 
 'use client';
@@ -15,63 +15,62 @@ export default function NewPostPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // API 호출 로직
     console.log({ title, content, category, isPublished });
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">새 포스트 작성</h1>
+        <h1 className="text-2xl font-bold">New Post</h1>
         <p className="text-gray-600 dark:text-gray-400">
-          새로운 분석 포스트를 작성하세요
+          Create a new analysis post
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* 제목 */}
+        {/* Title */}
         <div>
-          <label className="block text-sm font-medium mb-2">제목</label>
+          <label className="block text-sm font-medium mb-2">Title</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="포스트 제목을 입력하세요"
+            placeholder="Enter post title"
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900"
             required
           />
         </div>
 
-        {/* 카테고리 */}
+        {/* Category */}
         <div>
-          <label className="block text-sm font-medium mb-2">카테고리</label>
+          <label className="block text-sm font-medium mb-2">Category</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900"
           >
-            <option value="stock-analysis">종목분석</option>
-            <option value="market-trend">시장동향</option>
-            <option value="earnings">실적발표</option>
-            <option value="etf-analysis">ETF분석</option>
-            <option value="investment-strategy">투자전략</option>
+            <option value="stock-analysis">Stock Analysis</option>
+            <option value="market-trend">Market Trend</option>
+            <option value="earnings">Earnings</option>
+            <option value="etf-analysis">ETF Analysis</option>
+            <option value="investment-strategy">Investment Strategy</option>
           </select>
         </div>
 
-        {/* 본문 */}
+        {/* Content */}
         <div>
-          <label className="block text-sm font-medium mb-2">본문</label>
+          <label className="block text-sm font-medium mb-2">Content (Markdown)</label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="마크다운 형식의 본문을 입력하세요"
+            placeholder="Enter post content in Markdown format"
             rows={12}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 font-mono text-sm"
             required
           />
         </div>
 
-        {/* 발행 여부 */}
+        {/* Published */}
         <div className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -81,17 +80,17 @@ export default function NewPostPage() {
             className="w-4 h-4 rounded border-gray-300"
           />
           <label htmlFor="published" className="text-sm font-medium">
-            즉시 발행
+            Publish immediately
           </label>
         </div>
 
-        {/* 버튼 */}
+        {/* Buttons */}
         <div className="flex gap-3">
           <Button variant="primary">
-            저장 및 {isPublished ? '발행' : '초안 저장'}
+            {isPublished ? 'Publish' : 'Save as Draft'}
           </Button>
           <Button variant="outline">
-            취소
+            Cancel
           </Button>
         </div>
       </form>

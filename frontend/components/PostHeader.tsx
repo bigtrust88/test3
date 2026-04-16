@@ -11,7 +11,7 @@ interface PostHeaderProps {
 }
 
 export function PostHeader({ post }: PostHeaderProps) {
-  const publishDate = new Date(post.published_at).toLocaleDateString('ko-KR', {
+  const publishDate = new Date(post.published_at).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -21,9 +21,9 @@ export function PostHeader({ post }: PostHeaderProps) {
     <div className="space-y-6 mb-8">
       {/* 카테고리 + AI 뱃지 */}
       <div className="flex items-center gap-2 flex-wrap">
-        <Badge variant="primary">{post.category?.name_ko || '기타'}</Badge>
+        <Badge variant="primary">{post.category?.name_en || post.category?.name_ko || 'Other'}</Badge>
         {post.is_ai_generated && (
-          <Badge variant="success">🤖 AI 생성</Badge>
+          <Badge variant="success">🤖 AI Generated</Badge>
         )}
       </div>
 

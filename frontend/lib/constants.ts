@@ -5,33 +5,33 @@
 export const CATEGORIES = [
   {
     slug: 'stock-analysis',
-    name: '종목분석',
+    name: 'Stock Analysis',
     icon: '📈',
-    description: '개별 주식 종목에 대한 심층 분석',
+    description: 'In-depth analysis of individual US stocks',
   },
   {
     slug: 'market-trend',
-    name: '시장동향',
+    name: 'Market Trend',
     icon: '📊',
-    description: '미국 주식 시장 전반적인 동향과 분석',
+    description: 'Overall US stock market trends and analysis',
   },
   {
     slug: 'earnings',
-    name: '실적발표',
+    name: 'Earnings',
     icon: '💰',
-    description: '기업 실적 발표와 결과 분석',
+    description: 'Corporate earnings reports and results analysis',
   },
   {
     slug: 'etf-analysis',
-    name: 'ETF분석',
+    name: 'ETF Analysis',
     icon: '🏦',
-    description: 'ETF 투자 전략과 분석',
+    description: 'ETF investment strategies and analysis',
   },
   {
     slug: 'investment-strategy',
-    name: '투자전략',
+    name: 'Investment Strategy',
     icon: '🎯',
-    description: '장기 투자 전략과 포트폴리오 관리',
+    description: 'Long-term investment strategies and portfolio management',
   },
 ];
 
@@ -93,12 +93,12 @@ export const ROUTE_PATHS = {
   ADMIN_SETTINGS: '/admin/settings',
 };
 
-// 마켓 인덱스 (실시간 위젯)
+// Market indices (real-time widget)
 export const MARKET_INDICES = [
   { symbol: '^GSPC', name: 'S&P 500', icon: '📈' },
   { symbol: '^IXIC', name: 'NASDAQ', icon: '💻' },
   { symbol: '^DJI', name: 'DOW', icon: '🏛' },
-  { symbol: '^VIX', name: 'VIX (공포지수)', icon: '😱' },
+  { symbol: '^VIX', name: 'VIX (Fear Index)', icon: '😱' },
 ];
 
 // 저장소 키

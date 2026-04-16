@@ -33,7 +33,7 @@ export default function AdminPostsPage() {
   useEffect(() => { fetchPosts(); }, [page]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+    if (!confirm('Are you sure you want to delete this post?')) return;
     try {
       const token = localStorage.getItem('stock-blog:jwt');
       await fetch(`${API_URL}/api/posts/${id}`, {
@@ -42,16 +42,16 @@ export default function AdminPostsPage() {
       });
       fetchPosts();
     } catch (e) {
-      alert('삭제 실패');
+      alert('Delete failed');
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">포스트 관리</h1>
+        <h1 className="text-2xl font-bold">Manage Posts</h1>
         <Link href="/admin/posts/new">
-          <Button variant="primary">✍️ 새 포스트 작성</Button>
+          <Button variant="primary">✍️ New Post</Button>
         </Link>
       </div>
 
@@ -59,18 +59,18 @@ export default function AdminPostsPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
-              <th className="text-left py-4 px-6 font-semibold">제목</th>
-              <th className="text-left py-4 px-6 font-semibold">카테고리</th>
-              <th className="text-left py-4 px-6 font-semibold">상태</th>
-              <th className="text-left py-4 px-6 font-semibold">날짜</th>
-              <th className="text-left py-4 px-6 font-semibold">액션</th>
+              <th className="text-left py-4 px-6 font-semibold">Title</th>
+              <th className="text-left py-4 px-6 font-semibold">Category</th>
+              <th className="text-left py-4 px-6 font-semibold">Status</th>
+              <th className="text-left py-4 px-6 font-semibold">Date</th>
+              <th className="text-left py-4 px-6 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} className="py-8 text-center text-gray-500">로딩 중...</td></tr>
+              <tr><td colSpan={5} className="py-8 text-center text-gray-500">Loading...</td></tr>
             ) : posts.length === 0 ? (
-              <tr><td colSpan={5} className="py-8 text-center text-gray-500">포스트가 없습니다</td></tr>
+              <tr><td colSpan={5} className="py-8 text-center text-gray-500">No posts found</td></tr>
             ) : posts.map((post) => (
               <tr key={post.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
                 <td className="py-4 px-6 font-medium max-w-xs truncate">
@@ -84,22 +84,22 @@ export default function AdminPostsPage() {
                 <td className="py-4 px-6 text-sm">{post.category?.name_ko || '-'}</td>
                 <td className="py-4 px-6">
                   <Badge variant={post.is_published ? 'success' : 'secondary'} size="sm">
-                    {post.is_published ? '발행됨' : '초안'}
+                    {post.is_published ? 'Published' : 'Draft'}
                   </Badge>
                 </td>
                 <td className="py-4 px-6 text-sm">
-                  {post.published_at ? new Date(post.published_at).toLocaleDateString('ko-KR') : '-'}
+                  {post.published_at ? new Date(post.published_at).toLocaleDateString('en-US') : '-'}
                 </td>
                 <td className="py-4 px-6">
                   <div className="flex gap-2">
                     <Link href={`/admin/posts/${post.id}/edit`}>
-                      <Button variant="outline" size="sm">수정</Button>
+                      <Button variant="outline" size="sm">Edit</Button>
                     </Link>
                     <button
                       onClick={() => handleDelete(post.id)}
                       className="px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors"
                     >
-                      삭제
+                      Delete
                     </button>
                   </div>
                 </td>
@@ -110,18 +110,18 @@ export default function AdminPostsPage() {
       </div>
 
       <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-600 dark:text-gray-400">총 {total}개의 포스트</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{total} total posts</p>
         <div className="flex gap-2">
           <button
             disabled={page === 1}
             onClick={() => setPage(p => p - 1)}
             className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
-          >이전</button>
+          >Previous</button>
           <button
             disabled={posts.length < 20}
             onClick={() => setPage(p => p + 1)}
             className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
-          >다음</button>
+          >Next</button>
         </div>
       </div>
     </div>

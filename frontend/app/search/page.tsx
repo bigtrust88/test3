@@ -1,5 +1,5 @@
 /**
- * 검색 페이지
+ * Search Page
  */
 
 'use client';
@@ -31,38 +31,38 @@ function SearchContent() {
 
   return (
     <div className="space-y-8">
-      {/* 검색 헤더 */}
+      {/* Search Header */}
       <div className="py-12 border-b border-gray-200 dark:border-gray-800">
-        <h1 className="text-4xl font-bold mb-4">검색 결과</h1>
+        <h1 className="text-4xl font-bold mb-4">Search Results</h1>
         <div className="relative max-w-md">
           <input
             type="text"
             defaultValue={query}
-            placeholder="검색어를 입력하세요"
+            placeholder="Enter a search term..."
             className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900"
           />
         </div>
         {query && (
           <p className="mt-4 text-gray-600 dark:text-gray-400">
-            &apos;{query}&apos;에 대한 검색 결과: {results.length}개
+            {results.length} {results.length === 1 ? 'result' : 'results'} for &apos;{query}&apos;
           </p>
         )}
       </div>
 
-      {/* 결과 */}
+      {/* Results */}
       {query && (
         <Suspense fallback={<LatestPostsGrid posts={[]} isLoading={true} />}>
           <LatestPostsGrid
             posts={results}
             isLoading={isLoading}
-            title={`'${query}' 검색 결과`}
+            title={`Results for '${query}'`}
           />
         </Suspense>
       )}
 
       {!query && (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-          <p>검색어를 입력하여 포스트를 찾으세요.</p>
+          <p>Enter a search term to find posts.</p>
         </div>
       )}
     </div>
@@ -71,7 +71,7 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div>로딩 중...</div>}>
+    <Suspense fallback={<div>Loading...</div>}>
       <SearchContent />
     </Suspense>
   );

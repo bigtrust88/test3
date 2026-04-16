@@ -15,7 +15,7 @@ interface LatestPostsGridProps {
   title?: string;
 }
 
-export function LatestPostsGrid({ posts, isLoading = false, title = '최신 포스트' }: LatestPostsGridProps) {
+export function LatestPostsGrid({ posts, isLoading = false, title = 'Latest Posts' }: LatestPostsGridProps) {
   return (
     <section className="py-8">
       {title && <h2 className="text-2xl font-bold mb-8">{title}</h2>}
@@ -32,7 +32,7 @@ export function LatestPostsGrid({ posts, isLoading = false, title = '최신 포�
         </div>
       ) : posts.length === 0 ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-          <p>포스트가 없습니다.</p>
+          <p>No posts found.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

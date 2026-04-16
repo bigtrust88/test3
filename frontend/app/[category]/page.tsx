@@ -1,9 +1,8 @@
 /**
- * 카테고리 페이지
+ * Category Page
  * Dynamic route: /[category]/
  */
 
-// 항상 최신 데이터 가져오기 (SSR 모드)
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
@@ -33,8 +32,8 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const category = CATEGORIES.find((c) => c.slug === params.category);
 
   return {
-    title: `${category?.name || '카테고리'} | US Stock Story`,
-    description: category?.description || `US Stock Story의 ${category?.name} 포스트`,
+    title: `${category?.name || 'Category'} | US Stock Story`,
+    description: category?.description || `US Stock Story ${category?.name} posts`,
   };
 }
 
@@ -51,9 +50,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   if (!category) {
     return (
       <div className="text-center py-20">
-        <h1 className="text-3xl font-bold mb-4">카테고리를 찾을 수 없습니다</h1>
+        <h1 className="text-3xl font-bold mb-4">Category not found</h1>
         <Link href="/" className="text-blue-600 dark:text-blue-400 hover:underline">
-          홈으로 돌아가기
+          Back to Home
         </Link>
       </div>
     );
@@ -61,7 +60,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   return (
     <div className="space-y-8">
-      {/* 카테고리 헤더 */}
+      {/* Category Header */}
       <div className="py-12 border-b border-gray-200 dark:border-gray-800">
         <div className="text-4xl mb-4">{category.icon}</div>
         <h1 className="text-4xl font-bold mb-4">{category.name}</h1>
@@ -69,18 +68,18 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           <p className="text-lg text-gray-600 dark:text-gray-400">{category.description}</p>
         )}
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-          총 {posts.length}개의 포스트
+          {posts.length} {posts.length === 1 ? 'post' : 'posts'}
         </p>
       </div>
 
-      {/* 포스트 목록 */}
+      {/* Post List */}
       <Suspense fallback={<LatestPostsGrid posts={[]} isLoading={true} />}>
-        <LatestPostsGrid posts={posts} title={`${category.name} 분석`} />
+        <LatestPostsGrid posts={posts} title={`${category.name} Analysis`} />
       </Suspense>
 
-      {/* 다른 카테고리 링크 */}
+      {/* Other Categories */}
       <section className="py-12 border-t border-gray-200 dark:border-gray-800">
-        <h2 className="text-2xl font-bold mb-8">다른 카테고리</h2>
+        <h2 className="text-2xl font-bold mb-8">Other Categories</h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {CATEGORIES.filter((c) => c.slug !== params.category).map((cat) => (
             <Link

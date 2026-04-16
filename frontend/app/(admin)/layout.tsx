@@ -1,6 +1,6 @@
 /**
- * 관리자 레이아웃
- * 인증 보호 + 사이드바
+ * Admin Layout
+ * Auth guard + sidebar
  */
 
 'use client';
@@ -25,7 +25,7 @@ export default function AdminLayout({
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
-          <p>로딩 중...</p>
+          <p>Loading...</p>
         </div>
       </div>
     );
@@ -34,12 +34,12 @@ export default function AdminLayout({
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center flex-col gap-4">
-        <h1 className="text-2xl font-bold">로그인이 필요합니다</h1>
+        <h1 className="text-2xl font-bold">Login Required</h1>
         <p className="text-gray-600 dark:text-gray-400">
-          관리자 페이지에 접근하려면 로그인이 필요합니다.
+          You must be logged in to access the admin panel.
         </p>
         <Link href="/login">
-          <Button variant="primary">로그인 페이지로 가기</Button>
+          <Button variant="primary">Go to Login</Button>
         </Link>
       </div>
     );
@@ -47,15 +47,15 @@ export default function AdminLayout({
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-slate-950">
-      {/* 사이드바 */}
+      {/* Sidebar */}
       <AdminSidebar />
 
-      {/* 메인 콘텐츠 */}
+      {/* Main Content */}
       <main className="flex-1 overflow-auto">
         <div className="p-8">
-          {/* 헤더 */}
+          {/* Header */}
           <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-200 dark:border-gray-800">
-            <h1 className="text-3xl font-bold">관리자 대시보드</h1>
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
             <button
               onClick={() => {
                 localStorage.removeItem('stock-blog:jwt');
@@ -63,11 +63,11 @@ export default function AdminLayout({
               }}
               className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
-              로그아웃
+              Logout
             </button>
           </div>
 
-          {/* 콘텐츠 */}
+          {/* Content */}
           {children}
         </div>
       </main>

@@ -1,9 +1,9 @@
 /**
- * 홈 페이지
- * 최신 포스트, 카테고리별 섹션, 실시간 주가 위젯
+ * Home Page
+ * Latest posts, category sections, market widget
  */
 
-// 항상 최신 데이터 가져오기 (SSR 모드)
+// Always fetch fresh data (SSR mode)
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
@@ -35,35 +35,34 @@ export default async function Home() {
 
   return (
     <div className="space-y-8">
-      {/* 헤로 섹션 */}
+      {/* Hero Section */}
       <section className="text-center py-12">
         <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          미국 주식, 제대로 분석하기
+          US Stock Market, Analyzed Daily
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-          한국 개인 투자자를 위한 미국 주식 시장 분석과 투자 전략을 매일 제공합니다.
+          In-depth US stock analysis, earnings breakdowns, ETF picks, and investment strategies — updated every day.
         </p>
         <div className="flex gap-4 justify-center flex-wrap">
           <Link href="/stock-analysis">
             <Button variant="primary" size="lg">
-              시작하기
+              Get Started
             </Button>
           </Link>
           <Link href="/search">
             <Button variant="outline" size="lg">
-              검색하기
+              Search Posts
             </Button>
           </Link>
         </div>
       </section>
 
-
-      {/* 최신 포스트 */}
+      {/* Latest Posts */}
       <Suspense fallback={<LatestPostsGrid posts={[]} isLoading={true} />}>
-        <LatestPostsGrid posts={posts.slice(0, 6)} title="최신 분석" />
+        <LatestPostsGrid posts={posts.slice(0, 6)} title="Latest Analysis" />
       </Suspense>
 
-      {/* 카테고리별 섹션 */}
+      {/* Category Sections */}
       {categories.length > 0 && (
         <div className="space-y-12">
           {categories.slice(0, 5).map((category) => {
@@ -79,31 +78,31 @@ export default async function Home() {
         </div>
       )}
 
-      {/* 광고 */}
+      {/* Ad */}
       <AdUnit slot="9205887899" format="horizontal" />
 
-      {/* 태그 클라우드 */}
+      {/* Tag Cloud */}
       {tags.length > 0 && <TagCloud tags={tags.slice(0, 30)} />}
 
-      {/* 기능 요약 */}
+      {/* Features */}
       <section className="py-12">
-        <h2 className="text-2xl font-bold mb-8 text-center">US Stock Story의 특징</h2>
+        <h2 className="text-2xl font-bold mb-8 text-center">Why US Stock Story?</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             {
-              title: 'AI 자동 분석',
-              desc: 'Claude AI가 작성한 하루 3회 자동 분석 포스트',
+              title: 'AI-Powered Analysis',
+              desc: 'Daily stock analysis powered by Claude AI — published 3 times a day',
               icon: '🤖',
             },
             {
-              title: '실시간 시세',
-              desc: 'S&P500, NASDAQ 등 주요 지수 실시간 업데이트',
+              title: 'Real-Time Data',
+              desc: 'Live updates on S&P 500, NASDAQ, and major indices',
               icon: '⚡',
             },
             {
-              title: '한국 투자자 관점',
-              desc: '환율, 세금 등 한국 투자자를 위한 맞춤 정보',
-              icon: '🇰🇷',
+              title: 'Earnings Coverage',
+              desc: 'Comprehensive earnings breakdowns with forward guidance analysis',
+              icon: '📊',
             },
           ].map((feature, idx) => (
             <div
@@ -118,14 +117,14 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* CTA 섹션 */}
+      {/* CTA */}
       <section className="py-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white px-6 md:px-12">
-        <h2 className="text-2xl font-bold mb-4">매일 새로운 분석을 받아보세요</h2>
+        <h2 className="text-2xl font-bold mb-4">Stay Ahead of the Market</h2>
         <p className="text-blue-100 mb-6 max-w-2xl">
-          AI가 작성한 미국 주식 분석을 하루 3회(8시, 14시, 22시)에 자동으로 발행합니다.
+          AI-generated US stock analysis published 3 times daily — premarket, midday, and closing recap.
         </p>
         <Button variant="secondary" size="lg">
-          더 알아보기
+          Learn More
         </Button>
       </section>
     </div>

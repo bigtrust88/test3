@@ -11,12 +11,12 @@ import { ROUTE_PATHS } from '@/lib/constants';
 import clsx from 'clsx';
 
 const ADMIN_MENU = [
-  { label: '대시보드', href: ROUTE_PATHS.ADMIN, icon: '📊' },
-  { label: '포스트 관리', href: ROUTE_PATHS.ADMIN_POSTS, icon: '✍️' },
-  { label: 'AI 로그', href: ROUTE_PATHS.ADMIN_AI_LOGS, icon: '🤖' },
-  { label: '스케줄러', href: ROUTE_PATHS.ADMIN_SCHEDULER, icon: '⏰' },
+  { label: 'Dashboard', href: ROUTE_PATHS.ADMIN, icon: '📊' },
+  { label: 'Posts', href: ROUTE_PATHS.ADMIN_POSTS, icon: '✍️' },
+  { label: 'AI Logs', href: ROUTE_PATHS.ADMIN_AI_LOGS, icon: '🤖' },
+  { label: 'Scheduler', href: ROUTE_PATHS.ADMIN_SCHEDULER, icon: '⏰' },
   { label: 'AdSense', href: ROUTE_PATHS.ADMIN_ADSENSE, icon: '💰' },
-  { label: '설정', href: ROUTE_PATHS.ADMIN_SETTINGS, icon: '⚙️' },
+  { label: 'Settings', href: ROUTE_PATHS.ADMIN_SETTINGS, icon: '⚙️' },
 ];
 
 export function AdminSidebar() {

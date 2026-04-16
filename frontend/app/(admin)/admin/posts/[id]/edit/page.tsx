@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/Button';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const CATEGORIES = [
-  { slug: 'stock-analysis', name: '종목분석' },
-  { slug: 'market-trend', name: '시장동향' },
-  { slug: 'earnings', name: '실적발표' },
-  { slug: 'etf-analysis', name: 'ETF분석' },
-  { slug: 'investment-strategy', name: '투자전략' },
+  { slug: 'stock-analysis', name: 'Stock Analysis' },
+  { slug: 'market-trend', name: 'Market Trend' },
+  { slug: 'earnings', name: 'Earnings' },
+  { slug: 'etf-analysis', name: 'ETF Analysis' },
+  { slug: 'investment-strategy', name: 'Investment Strategy' },
 ];
 
 export default function EditPostPage({ params }: { params: { id: string } }) {
@@ -47,7 +47,7 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
         setCoverImageUrl(post.cover_image_url || '');
         setIsPublished(post.is_published ?? true);
       } catch (e) {
-        setMsg('포스트를 불러오지 못했습니다');
+        setMsg('Failed to load post');
       } finally {
         setLoading(false);
       }
@@ -71,15 +71,14 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
       const data = await res.json();
       if (data.url) {
         setCoverImageUrl(data.url);
-        setMsg('✅ 이미지 업로드 완료');
+        setMsg('✅ Image uploaded successfully');
       } else if (data.message) {
-        // R2 미설정 등의 사유
-        setMsg(`⚠️ ${data.message} 이미지 URL을 직접 입력하거나 외부 이미지를 사용해주세요.`);
+        setMsg(`⚠️ ${data.message} Please enter an image URL directly or use an external image.`);
       } else {
-        setMsg('❌ 업로드 실패: ' + (data.error?.message || '알 수 없는 오류'));
+        setMsg('❌ Upload failed: ' + (data.error?.message || 'Unknown error'));
       }
     } catch (e) {
-      setMsg('❌ 업로드 실패: 네트워크 연결을 확인하세요');
+      setMsg('❌ Upload failed: Please check your network connection');
     } finally {
       setUploading(false);
     }
@@ -107,28 +106,28 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
         }),
       });
       if (res.ok) {
-        setMsg('✅ 저장 완료!');
+        setMsg('✅ Saved successfully!');
       } else {
         const err = await res.json();
-        setMsg('❌ 저장 실패: ' + (err.message || res.status));
+        setMsg('❌ Save failed: ' + (err.message || res.status));
       }
     } catch (e) {
-      setMsg('❌ 저장 실패');
+      setMsg('❌ Save failed');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <div className="py-20 text-center">로딩 중...</div>;
+  if (loading) return <div className="py-20 text-center">Loading...</div>;
 
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">포스트 수정</h1>
+        <h1 className="text-2xl font-bold">Edit Post</h1>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => router.back()}>취소</Button>
+          <Button variant="outline" onClick={() => router.back()}>Cancel</Button>
           <Button variant="primary" onClick={handleSave} disabled={saving}>
-            {saving ? '저장 중...' : '💾 저장'}
+            {saving ? 'Saving...' : '💾 Save'}
           </Button>
         </div>
       </div>
@@ -139,9 +138,9 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
         </div>
       )}
 
-      {/* 제목 */}
+      {/* Title */}
       <div>
-        <label className="block text-sm font-medium mb-2">제목</label>
+        <label className="block text-sm font-medium mb-2">Title</label>
         <input
           value={title}
           onChange={e => setTitle(e.target.value)}
@@ -149,9 +148,9 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
         />
       </div>
 
-      {/* 요약 */}
+      {/* Excerpt */}
       <div>
-        <label className="block text-sm font-medium mb-2">요약 (excerpt)</label>
+        <label className="block text-sm font-medium mb-2">Excerpt</label>
         <textarea
           value={excerpt}
           onChange={e => setExcerpt(e.target.value)}
@@ -160,10 +159,10 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
         />
       </div>
 
-      {/* 카테고리 + 발행 상태 */}
+      {/* Category + Tags */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-2">카테고리</label>
+          <label className="block text-sm font-medium mb-2">Category</label>
           <select
             value={categorySlug}
             onChange={e => setCategorySlug(e.target.value)}
@@ -173,30 +172,29 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-2">태그 (쉼표로 구분)</label>
+          <label className="block text-sm font-medium mb-2">Tags (comma-separated)</label>
           <input
             value={tags}
             onChange={e => setTags(e.target.value)}
-            placeholder="미국주식, NVIDIA, AI반도체"
+            placeholder="US stocks, NVIDIA, AI semiconductors"
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
 
-      {/* 커버 이미지 */}
+      {/* Cover Image */}
       <div>
-        <label className="block text-sm font-medium mb-2">커버 이미지</label>
+        <label className="block text-sm font-medium mb-2">Cover Image</label>
         <div className="space-y-3">
-          {/* 파일 업로드 */}
           <div className="flex gap-3 items-center">
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
             >
-              {uploading ? '업로드 중...' : '📁 파일 선택'}
+              {uploading ? 'Uploading...' : '📁 Choose File'}
             </button>
-            <span className="text-sm text-gray-500">JPG, PNG, WEBP, GIF (최대 5MB)</span>
+            <span className="text-sm text-gray-500">JPG, PNG, WEBP, GIF (max 5MB)</span>
             <input
               ref={fileInputRef}
               type="file"
@@ -205,17 +203,15 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
               className="hidden"
             />
           </div>
-          {/* URL 직접 입력 */}
           <input
             value={coverImageUrl}
             onChange={e => setCoverImageUrl(e.target.value)}
-            placeholder="또는 이미지 URL을 직접 입력하세요"
+            placeholder="Or paste an image URL directly"
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
           />
-          {/* 미리보기 */}
           {coverImageUrl && (
             <div className="relative">
-              <img src={coverImageUrl} alt="커버 미리보기" className="h-40 object-cover rounded-lg border border-gray-200 dark:border-gray-700" />
+              <img src={coverImageUrl} alt="Cover preview" className="h-40 object-cover rounded-lg border border-gray-200 dark:border-gray-700" />
               <button
                 onClick={() => setCoverImageUrl('')}
                 className="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center hover:bg-red-600"
@@ -225,9 +221,9 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {/* 본문 (마크다운) */}
+      {/* Content (Markdown) */}
       <div>
-        <label className="block text-sm font-medium mb-2">본문 (마크다운)</label>
+        <label className="block text-sm font-medium mb-2">Content (Markdown)</label>
         <textarea
           value={contentMd}
           onChange={e => setContentMd(e.target.value)}
@@ -236,7 +232,7 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
         />
       </div>
 
-      {/* 발행 상태 */}
+      {/* Published Status */}
       <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <input
           type="checkbox"
@@ -245,14 +241,14 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
           onChange={e => setIsPublished(e.target.checked)}
           className="w-4 h-4"
         />
-        <label htmlFor="published" className="text-sm font-medium">발행됨 (체크 해제 시 초안으로 변경)</label>
+        <label htmlFor="published" className="text-sm font-medium">Published (uncheck to save as draft)</label>
       </div>
 
-      {/* 저장 버튼 */}
+      {/* Save Button */}
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
-        <Button variant="outline" onClick={() => router.back()}>취소</Button>
+        <Button variant="outline" onClick={() => router.back()}>Cancel</Button>
         <Button variant="primary" onClick={handleSave} disabled={saving}>
-          {saving ? '저장 중...' : '💾 저장'}
+          {saving ? 'Saving...' : '💾 Save'}
         </Button>
       </div>
     </div>

@@ -44,7 +44,7 @@ export function Navigation({ activeCategory }: NavigationProps) {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="md:hidden p-2 text-gray-700 dark:text-gray-300"
-        aria-label="카테고리 메뉴"
+        aria-label="Category menu"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path

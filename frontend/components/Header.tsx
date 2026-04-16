@@ -41,13 +41,13 @@ export function Header({ activeCategory }: HeaderProps) {
             {isAuthenticated ? (
               <Link href="/admin">
                 <Button variant="secondary" size="sm">
-                  대시보드
+                  Dashboard
                 </Button>
               </Link>
             ) : (
               <Link href="/login">
                 <Button variant="secondary" size="sm">
-                  로그인
+                  Login
                 </Button>
               </Link>
             )}

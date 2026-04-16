@@ -35,7 +35,7 @@ export function CategorySection({ category, posts }: CategorySectionProps) {
       </div>
 
       <Link href={`/${category.slug}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
-        모든 {category.name_ko} 보기 →
+        View all {category.name_en || category.name_ko} →
       </Link>
     </section>
   );

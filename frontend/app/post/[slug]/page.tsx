@@ -94,7 +94,7 @@ export default async function PostPage({ params }: PostPageProps) {
             <RelatedPosts
               posts={categoryRelatedPosts}
               currentPostId={post.id}
-              title={`${post.category?.name_ko || '관련'} 다른 분석`}
+              title={`More ${post.category?.name_en || post.category?.name_ko || 'Related'} Analysis`}
             />
           )}
 
