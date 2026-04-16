@@ -165,9 +165,8 @@ export class PostsService {
   }
 
   async deleteTag(id: string) {
-    const tag = await this.tagRepository.findOne({ where: { id } });
-    if (!tag) throw new Error('Tag not found');
-    await this.tagRepository.remove(tag);
+    const result = await this.tagRepository.delete({ id });
+    if (result.affected === 0) throw new Error('Tag not found');
     return { deleted: true, id };
   }
 
