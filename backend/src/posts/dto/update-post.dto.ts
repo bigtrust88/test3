@@ -57,4 +57,27 @@ export class UpdatePostDto {
   @IsBoolean()
   @IsOptional()
   is_published?: boolean;
+
+  // Canvas Thumbnail Generation Fields
+  @IsString()
+  @IsOptional()
+  @MaxLength(44)
+  thumbnail_headline?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(30)
+  thumbnail_subtext?: string;
+
+  @IsString()
+  @IsOptional()
+  thumbnail_sentiment?: string; // bullish | bearish | neutral
+
+  @IsString()
+  @IsOptional()
+  trigger_type?: string; // morning | afternoon | evening
+
+  @IsArray()
+  @IsOptional()
+  highlight_keywords?: string[];
 }

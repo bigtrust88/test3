@@ -19,7 +19,14 @@
       "Bash(kill %1)",
       "Bash(timeout 5 npm start)",
       "Bash(cat vercel.json)",
-      "Bash(cat frontend/vercel.json)"
+      "Bash(cat frontend/vercel.json)",
+      "WebSearch",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(curl -s \"https://api.bigtrust.site/api/posts?limit=20\")",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\); const j=JSON.parse\\(d\\); j.data.forEach\\(p=>console.log\\(p.id, p.slug, p.title.substring\\(0,60\\)\\)\\)\")",
+      "Bash(node -e \"const j=require\\('/tmp/posts.json'\\); j.data.forEach\\(p=>console.log\\(p.id+'|'+p.slug+'|'+p.title.substring\\(0,80\\)\\)\\)\")"
     ]
   }
 }
