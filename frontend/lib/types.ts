@@ -16,6 +16,7 @@ export interface Category {
   id: string;
   uuid: string;
   name_ko: string;
+  name_en?: string;
   slug: string;
   description?: string;
   created_at: string;
