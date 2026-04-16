@@ -1,7 +1,7 @@
 import { Controller, Get, Delete, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { PostsService } from './posts.service';
-import { JwtAuthGuard } from '../auth/guards/jwt.guard';
+import { JwtGuard } from '../auth/guards/jwt.guard';
 
 @ApiTags('Tags')
 @Controller('tags')
@@ -16,7 +16,7 @@ export class TagsController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtGuard)
   @ApiOperation({ summary: 'Delete a tag by ID (admin only)' })
   async deleteTag(@Param('id') id: string) {
     return this.postsService.deleteTag(id);
