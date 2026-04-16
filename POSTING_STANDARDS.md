@@ -32,69 +32,58 @@ Google AdSense permits AI-generated content provided it demonstrates **Experienc
 - Use correct financial terminology: EPS, ROE, P/E, NII, CAGR, free cash flow, etc.
 - Explain the *significance* of each metric — don't just report numbers
 - Provide sector context: compare to industry peers or historical averages
-- Avoid vague language like "stocks could go up or down"
 
 ### Authoritativeness
 - Cite at least **2 named sources** per post (e.g., FactSet, Bloomberg, company IR, CNBC, Reuters)
 - Reference consensus analyst estimates when discussing expectations
-- When quoting management, attribute to the person and the occasion (e.g., "CEO Jamie Dimon, Q1 2026 earnings call")
+- When quoting management, attribute to the person and the occasion
 
 ### Trustworthiness
 - State the data date clearly in the post (e.g., "as of April 16, 2026")
 - Distinguish between **reported figures** and **estimates/forecasts**
-- Mark AI-assisted content transparently — the site already tags posts as AI-generated
-- Include the standard disclaimer on every post (see template below)
+- Include the standard disclaimer on every post
 - Never overstate certainty: use "suggests," "indicates," "analysts expect" — not "will" or "guaranteed"
 
 ---
 
-## 2. Thumbnail & Cover Image (AI-Generated via Canvas)
+## 2. Thumbnail & Cover Image
 
-### 📐 Thumbnail Generation Method
+### 🎨 Thumbnail Generation Method
 
-**All thumbnails are auto-generated using NestJS Canvas (skia-canvas) service.**
+**Thumbnails are Canvas-composited images uploaded to R2 CDN.**
 
-- **Cost**: $0/month (no Bannerbear fees)
-- **Speed**: <100ms per image
-- **Format**: 1200×630px (16:9 OG Image standard)
-- **Quality**: Professional, content-aware design
+- **Background**: Content-relevant Unsplash photo (topic-matched, e.g. chip fab for TSMC, stock chart for investment posts)
+- **Composite layers**: dark gradient overlay + badge + logo + headline + subtext + divider + tags/date
+- **Tool**: Node.js `canvas` package (`generate_real_thumbnails.js`)
+- **Storage**: Cloudflare R2 via `/api/upload/image` → `cover_image_url`
+- **Format**: 1200×630px PNG
 
-### How It Works
+### Unsplash Background URL Format
 
-When you create a post, provide these thumbnail parameters in the payload:
-
-```json
-{
-  "thumbnail_headline": "TSMC Q1 2024: Record Revenue",      // max 44 chars
-  "thumbnail_subtext": "AI chip demand drives growth",         // max 30 chars
-  "thumbnail_sentiment": "bullish",                           // bullish|bearish|neutral
-  "highlight_keywords": ["TSMC", "AI", "semiconductors"],    // for design emphasis
-  "category_slug": "stock-analysis",                          // determines badge color
-  "trigger_type": "morning"                                   // morning|afternoon|evening
-}
+```
+https://images.unsplash.com/photo-{PHOTO_ID}?w=1200&q=80&fm=jpg
 ```
 
-### Canvas Design Features
+Pick a photo relevant to the post topic. Always verify the URL loads before using.
 
-- **Background**: Time-based theme (morning blue, afternoon green, evening yellow)
-- **Badge**: Category + sentiment indicator (top-left)
-- **Logo**: "USStockStory" branding (top-right)
-- **Headline**: Bold, 2-line max (main content)
-- **Subtext**: Secondary message (gray text)
-- **Footer**: Tags + publication date
-- **Accent Colors**: Bullish (green), Bearish (red), Neutral (blue)
+### Canvas Composite Layers (top to bottom)
 
-### ✅ What NOT to Do
+1. Background photo (full 1200×630)
+2. Dark linear gradient overlay (top: rgba(0,0,0,0.55) → bottom: rgba(0,0,0,0.80))
+3. Sentiment glow (radial, bottom-left corner)
+4. Badge rect + text top-left (PRE-MARKET / ANALYSIS / MARKET CLOSE — **no emojis**)
+5. Logo text top-right ("USStockStory")
+6. Headline (bold, max 2 lines, 60px white)
+7. Subtext (30px gray #CBD5E1)
+8. Divider line (bottom area)
+9. Tags + date footer
 
-❌ Do NOT upload custom images to R2 manually  
-❌ Do NOT use Unsplash links  
-❌ Do NOT manually set cover_image_url
+### ⚠️ CRITICAL: R2 URL Requirement
 
-Canvas handles all of this automatically!
+**❌ DO NOT use raw Unsplash URLs as cover_image_url.**
+**✅ MUST: Generate Canvas composite → upload to R2 → use R2 URL (`https://pub-xxxxxx.r2.dev/images/...`)**
 
-### 📝 Reference
-
-See `THUMBNAIL_GENERATION-CANVAS.md` for technical implementation details.
+See `THUMBNAIL_GENERATION-8.md` for full Canvas implementation details.
 
 ---
 
@@ -107,32 +96,31 @@ See `THUMBNAIL_GENERATION-CANVAS.md` for technical implementation details.
 
 ---
 
-## 4. In-Body Image (필수 — MUST HAVE)
+## 4. In-Body Image (REQUIRED)
 
-- Insert **EXACTLY 1 related image** in the middle of the post body — **this is REQUIRED, not optional**
-- Position: right after key data is introduced (e.g., after data table), or before a new analysis section
-- Markdown format: `![description](imageURL)` — **must be in content_md, not optional**
-- Image source: Unsplash free images (https://unsplash.com) or official company images
+- Insert **EXACTLY 1 related image** in the middle of the post body
+- Position: after the key data table, before the next analysis section
+- Markdown format: `![alt text describing image](unsplash-url)`
+- **Source**: Unsplash stable URL format:
+  ```
+  https://images.unsplash.com/photo-{PHOTO_ID}?w=1200&q=80&fm=jpg
+  ```
+- Choose a photo relevant to the post topic (same photo selection logic as thumbnail background)
 - Alt text: descriptive English text for SEO
-- Resolution: minimum 1200x630px
-- **CRITICAL CHECK**: Without this image in content_md, the post will not display correctly. Always verify the image URL is included BEFORE uploading to API.
 
 ---
 
 ## 5. Data Verification
 
-Always verify the following before publishing:
-
 | Item | Source |
 |------|--------|
-| Stock/ETF price | Yahoo Finance, stockanalysis.com (real-time) |
+| Stock/ETF price | Yahoo Finance, stockanalysis.com |
 | Earnings data | Official IR, SEC filing, Bloomberg, Reuters |
 | Analyst estimates | FactSet, Visible Alpha, Wall Street consensus |
 | Market indices | CNBC, MarketWatch |
-| Date reference | Must specify date in post (e.g., "as of April 2026") |
+| Date reference | Must specify date in post |
 
 - Data older than **7 days** must be updated before use
-- Estimates must cite their source explicitly in the text
 
 ---
 
@@ -152,38 +140,34 @@ Always verify the following before publishing:
 |--------|-------|--------------------|
 | EPS | $XX.XX | Beat by X% |
 | Revenue | $XXB | +XX% YoY |
-| [Metric] | [Value] | [Context] |
 
 ---
 
-## [Analysis Section 1 — e.g., Segment Breakdown]
+## [Analysis Section 1]
 
-[200–300 words. Explain what the numbers mean, not just what they are.
-Cite sources. Compare to peers or history.]
+[200–300 words. Explain what the numbers mean.]
 
-![related image description](imageURL)
+![related image description](https://images.unsplash.com/photo-{ID}?w=1200&q=80&fm=jpg)
 
 ---
 
-## [Analysis Section 2 — e.g., Forward Outlook]
+## [Analysis Section 2 — Forward Outlook]
 
-[200–300 words. Forward guidance, analyst expectations, key risks ahead.
-Distinguish estimates from facts.]
+[200–300 words. Forward guidance, analyst expectations, key risks.]
 
 ---
 
 ## Risk Factors
 
-- **Risk 1**: [specific, concrete explanation]
-- **Risk 2**: [specific, concrete explanation]
-- **Risk 3**: [specific, concrete explanation]
+- **Risk 1**: [specific explanation]
+- **Risk 2**: [specific explanation]
+- **Risk 3**: [specific explanation]
 
 ---
 
 ## Investment Outlook
 
-[100–150 words. Balanced conclusion. State assumptions clearly.
-Avoid definitive predictions.]
+[100–150 words. Balanced conclusion.]
 
 > **Disclaimer**: This content is for informational purposes only and was produced with AI assistance. It does not constitute financial advice. All investment decisions carry risk and are solely your own responsibility. Past performance is not indicative of future results.
 ```
@@ -194,40 +178,35 @@ Avoid definitive predictions.]
 
 ### Post Content
 - [ ] `title`: includes key ticker/keyword, under 60 characters
-- [ ] `excerpt`: 1–2 sentence summary, under 160 characters — must state a concrete fact
+- [ ] `excerpt`: under 160 characters, includes a concrete fact/number
 - [ ] `category`: stock-analysis / market-trend / earnings / etf-analysis / investment-strategy
-- [ ] `tags`: related ticker symbols + topic keywords, 3–5 tags (must exist in DB)
-- [ ] `is_published`: true
-- [ ] `reading_time_mins`: 4–6 minutes based on content length
-- [ ] At least 2 named sources cited in body
-- [ ] Data date stated in post
-- [ ] Disclaimer included
+- [ ] `tags`: 3–5 tags (must exist in DB)
+- [ ] `reading_time_mins`: 4–6 minutes
 
-### Thumbnail (Canvas Auto-Generation)
-- [ ] `thumbnail_headline`: max 44 chars, engaging headline
-- [ ] `thumbnail_subtext`: max 30 chars, supporting message
+### Thumbnail
+- [ ] `thumbnail_headline`: max 44 chars
+- [ ] `thumbnail_subtext`: max 30 chars
 - [ ] `thumbnail_sentiment`: bullish / bearish / neutral
 - [ ] `trigger_type`: morning / afternoon / evening
-- [ ] `highlight_keywords`: 3–5 important keywords from post
+- [ ] **`cover_image_url` is an R2 CDN URL** (`https://pub-xxxxxx.r2.dev/images/...`)
 
 ### Body Content
-- [ ] `content_md`: **includes 1 in-body image with markdown format ![description](URL)**
-- [ ] All images have valid, stable Unsplash URLs (ixlib=rb-4.0.3 format)
+- [ ] `content_md` includes **exactly 1 in-body image**: `![description](unsplash-url)`
+- [ ] Unsplash URL is stable format (`?w=1200&q=80&fm=jpg`)
 
-### **CRITICAL CHECK**
-- [ ] ✅ thumbnail_headline and thumbnail_subtext are provided (Canvas will auto-generate cover_image_url)
-- [ ] ✅ in-body image is present in content_md
-- [ ] ✅ All image URLs use stable format (ixlib=rb-4.0.3&auto=format&fit=crop)
+### CRITICAL IMAGE CHECK
+- [ ] ✅ `cover_image_url` = R2 URL (Canvas composite uploaded to R2)
+- [ ] ✅ In-body image present in `content_md` with Unsplash URL
+- [ ] ✅ Both URLs verified as accessible before publishing
 
 ---
 
 ## 8. SEO Guidelines
 
 - Include ticker symbol in the title (e.g., SMH, NVDA, TSLA)
-- Naturally incorporate key keywords in the first paragraph
-- Slug must be in English (e.g., `smh-etf-ai-semiconductor-analysis-0415`)
-- Target long-tail keywords English-speaking investors search for (e.g., "NVDA earnings Q1 2026 analysis")
-- Meta excerpt should include a specific data point (number, percentage, or date) — this improves CTR
+- Slug must be in English (e.g., `tsmc-q1-2024-earnings-ai-demand`)
+- Target long-tail keywords English-speaking investors search for
+- Meta excerpt should include a specific data point
 
 ---
 
@@ -235,23 +214,18 @@ Avoid definitive predictions.]
 
 - **All posts: English only**
 - No Korean text in titles, excerpts, body, or tags
-- Write for a global audience — avoid region-specific references
 - Tone: professional but accessible — like a knowledgeable analyst writing for retail investors
 
 ---
 
 ## 10. E-E-A-T Self-Check Before Publishing
 
-Before hitting publish, confirm every item:
-
-- [ ] Does the post cite **at least 2 named sources**?
-- [ ] Is every key number tied to a **specific date**?
-- [ ] Does the analysis explain **why** the data matters (not just what it is)?
-- [ ] Are estimates clearly labeled as estimates, not facts?
-- [ ] Does the post avoid exaggerated claims or certainty?
-- [ ] Is the disclaimer included at the end?
-- [ ] Would a knowledgeable investor find this genuinely useful?
-- [ ] **CRITICAL**: Is cover_image_url present and valid (1200x630px minimum)?
-- [ ] **CRITICAL**: Is EXACTLY 1 in-body image present in content_md with markdown format `![description](URL)`?
+- [ ] At least 2 named sources cited?
+- [ ] Every key number tied to a specific date?
+- [ ] Analysis explains *why* data matters (not just what)?
+- [ ] Estimates clearly labeled as estimates?
+- [ ] Disclaimer included?
+- [ ] `cover_image_url` is an R2 CDN URL?
+- [ ] Exactly 1 in-body image in `content_md`?
 
 If any box is unchecked, revise before publishing.

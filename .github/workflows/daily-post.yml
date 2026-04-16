@@ -1,0 +1,45 @@
+name: Daily US Stock Post (9AM KST)
+
+on:
+  schedule:
+    # 매일 00:00 UTC = 한국시간 09:00 KST
+    - cron: '0 0 * * *'
+  # GitHub UI에서 수동 실행 버튼
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # node-canvas 네이티브 빌드에 필요한 시스템 라이브러리
+      - name: Install canvas system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            build-essential \
+            libcairo2-dev \
+            libpango1.0-dev \
+            libjpeg-dev \
+            libgif-dev \
+            librsvg2-dev
+
+      - name: Install Node.js dependencies
+        run: npm install
+
+      - name: Run daily post script
+        env:
+          BIGTRUST_EMAIL:    ${{ secrets.BIGTRUST_EMAIL }}
+          BIGTRUST_PASSWORD: ${{ secrets.BIGTRUST_PASSWORD }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node scripts/auto_post.js
