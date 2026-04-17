@@ -161,8 +161,7 @@ function analyzeCategoryBalance(existingPosts) {
   existingPosts.forEach(p => {
     if (p.category_slug && counts[p.category_slug] !== undefined) counts[p.category_slug]++;
   });
-  // 포스트 수 오름차순 정렬 (적은 카테고리가 앞)
-  const ranked = ALL_CATEGORIES.sort((a, b) => counts[a] - counts[b]);
+  const ranked = [...ALL_CATEGORIES].sort((a, b) => counts[a] - counts[b]);
   return { counts, prioritized: ranked };
 }
 
@@ -185,18 +184,16 @@ async function generateTopics(today, existingPosts) {
   console.log(`  📊 카테고리 분포:\n${categoryStats}`);
   console.log(`  🎯 우선순위 카테고리: ${topPriority}`);
 
-  // photo 사용 분포 분석
+  // 기존 포스트에서 사용된 photo_category 집계 → 미사용/적게 쓰인 것부터 선택지 제공
   const { counts: photoCounts, prioritized: photoPriority } = analyzePhotoUsage(existingPosts);
-  const photoStats = Object.entries(photoCounts)
-    .sort((a, b) => a[1] - b[1])
-    .map(([cat, n]) => `  - ${cat}: ${n} uses`)
-    .join('\n');
+  // 미사용 사진이 있으면 그것만, 없으면 가장 적게 쓰인 순으로 넉넉히 제공 (3개 고를 수 있도록 최소 6개)
   const unusedPhotos = photoPriority.filter(p => photoCounts[p] === 0);
-  const leastUsedPhotos = photoPriority.slice(0, 5).join(', ');
+  const availablePhotos = unusedPhotos.length >= 3
+    ? unusedPhotos
+    : photoPriority.slice(0, Math.max(6, unusedPhotos.length + 3));
 
-  console.log(`  🖼️  Photo 사용 분포:\n${photoStats}`);
-  console.log(`  🎯 미사용 Photo: ${unusedPhotos.join(', ') || '없음 (전부 사용됨)'}`);
-  console.log(`  🎯 우선 Photo: ${leastUsedPhotos}`);
+  console.log(`  🖼️  미사용 Photo: ${unusedPhotos.join(', ') || '없음'}`);
+  console.log(`  🎯 선택 가능 Photo (${availablePhotos.length}개): ${availablePhotos.join(', ')}`);
 
   const msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -219,17 +216,22 @@ ${existingList}
 CATEGORY DISTRIBUTION (current post counts):
 ${categoryStats}
 
-PRIORITY CATEGORIES (fewest posts — must be used first): ${topPriority}
+PRIORITY CATEGORIES (fewest posts — at least 2 of 3 topics must use these): ${topPriority}
 
-CATEGORY BALANCE RULES (from POSTING_STANDARDS.md):
+CATEGORY BALANCE RULES:
 - At least 2 of the 3 topics MUST come from the priority categories above
 - Do NOT add more posts to the most-populated category unless all others are covered
-- The goal is balanced coverage across all 5 categories over time
 
-Follow the POSTING_STANDARDS.md "Duplicate Post Prevention" rule above.
-Do NOT pick any topic that overlaps with the existing posts list above.
+AVAILABLE PHOTO CATEGORIES (choose ONLY from this list — these are not yet used or least used across existing posts):
+${availablePhotos.join(', ')}
 
-Return ONLY a JSON array (no markdown, no explanation) with exactly 3 objects, each having:
+PHOTO RULES:
+- Each topic's photo_category and body_photo_category MUST be chosen from the AVAILABLE list above
+- All 3 topics must use DIFFERENT photo_categories from each other
+- Choose the photo_category that best fits the post topic/concept from the available options
+- Do NOT use any photo_category not listed in the available list above
+
+Return ONLY a JSON array (no markdown, no explanation) with exactly 3 objects:
 {
   "title": "SEO title under 60 chars with ticker symbol",
   "slug": "url-slug-in-english-with-ticker",
@@ -240,26 +242,9 @@ Return ONLY a JSON array (no markdown, no explanation) with exactly 3 objects, e
   "thumbnail_subtext": "max 30 chars — key metric or supporting stat",
   "sentiment": "bullish|bearish|neutral",
   "trigger_type": "morning",
-  "photo_category": "semiconductor|gpu|datacenter|finance|bank|streaming|technology|electric-vehicle|biotech|energy|retail|cloud",
-  "body_photo_category": "semiconductor|gpu|datacenter|finance|bank|streaming|technology|electric-vehicle|biotech|energy|retail|cloud"
+  "photo_category": "(must be from available list above)",
+  "body_photo_category": "(must be from available list above, can differ from photo_category)"
 }
-
-PHOTO USAGE ACROSS ALL EXISTING POSTS:
-${photoStats}
-
-PHOTO PRIORITY (least used first — prefer these):
-${leastUsedPhotos}
-
-${unusedPhotos.length > 0 ? `UNUSED PHOTOS (use these first): ${unusedPhotos.join(', ')}` : 'All photo categories have been used at least once — pick the least-used ones above.'}
-
-THUMBNAIL RULES (from THUMBNAIL_GENERATION-8.md):
-- thumbnail_headline: max 44 chars
-- thumbnail_subtext: max 30 chars
-- photo_category must NOT use declining/downward chart images
-- Each of the 3 topics MUST use a DIFFERENT photo_category
-- MUST prioritize photo categories from the "least used" list above
-- Do NOT reuse the most frequently used photo categories if alternatives exist
-- sentiment glow: bullish=#10B981, bearish=#EF4444, neutral=#3B82F6
 
 Available tags (use exact names): NVIDIA, TSMC, semiconductors, AI semiconductors, AMD, Netflix, Goldman Sachs, banks, Tesla, Q1 2026, earnings, earnings season, S&P 500, SMH, ETF, streaming`
     }]
