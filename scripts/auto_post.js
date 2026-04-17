@@ -96,7 +96,18 @@ async function login() {
   return result.access_token;
 }
 
-// ── 2. 카테고리 & 태그 조회 ──────────────────────────────────────────
+// ── 2. 기존 포스팅 목록 조회 (중복 방지) ────────────────────────────
+async function getExistingPosts(token) {
+  const res = await apiRequest({
+    hostname: API_HOST,
+    path: '/api/posts?limit=100&sort=newest',
+    headers: { Authorization: 'Bearer ' + token },
+  });
+  const list = res.data || [];
+  return list.map(p => ({ title: p.title, slug: p.slug }));
+}
+
+// ── 3. 카테고리 & 태그 조회 ──────────────────────────────────────────
 async function getCategories(token) {
   const res = await apiRequest({ hostname: API_HOST, path: '/api/categories', headers: { Authorization: 'Bearer ' + token } });
   const list = res.data || res;
@@ -114,8 +125,12 @@ async function getTags(token) {
 }
 
 // ── 3. Claude — 오늘의 3개 주제 선정 ────────────────────────────────
-async function generateTopics(today) {
+async function generateTopics(today, existingPosts) {
   console.log('  🤖 Claude에게 오늘의 주제 요청 중...');
+
+  const existingList = existingPosts.length > 0
+    ? existingPosts.map((p, i) => `${i + 1}. ${p.title}`).join('\n')
+    : '(없음)';
 
   const msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -132,7 +147,11 @@ ${THUMBNAIL_GENERATION}`,
       role: 'user',
       content: `Today is ${today}. Generate 3 distinct US stock investment blog post topics for USStockStory.com.
 
-Follow the POSTING_STANDARDS.md and THUMBNAIL_GENERATION-8.md guidelines above.
+EXISTING POSTS (MUST NOT DUPLICATE — strictly forbidden):
+${existingList}
+
+Follow the POSTING_STANDARDS.md "Duplicate Post Prevention" rule above.
+Do NOT pick any topic that overlaps with the existing posts list above.
 Vary the categories (earnings, sector analysis, investment strategy, market trend).
 
 Return ONLY a JSON array (no markdown, no explanation) with exactly 3 objects, each having:
@@ -354,12 +373,16 @@ async function run() {
   // 1. 로그인
   const token = await login();
 
-  // 2. 카테고리 & 태그 맵 조회
+  // 2. 기존 포스팅 목록 조회 (중복 방지)
+  const existingPosts = await getExistingPosts(token);
+  console.log(`  📋 기존 포스팅 ${existingPosts.length}개 확인 완료`);
+
+  // 3. 카테고리 & 태그 맵 조회
   const categoryMap = await getCategories(token);
   const tagMap      = await getTags(token);
 
-  // 3. 오늘의 주제 3개 선정
-  const topics = await generateTopics(today);
+  // 4. 오늘의 주제 3개 선정 (기존 포스팅 제외)
+  const topics = await generateTopics(today, existingPosts);
   console.log(`  ✅ 주제 ${topics.length}개 선정 완료\n`);
 
   let successCount = 0;

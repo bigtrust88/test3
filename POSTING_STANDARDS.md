@@ -19,6 +19,19 @@ Google AdSense permits AI-generated content provided it demonstrates **Experienc
 
 ---
 
+## Duplicate Post Prevention (MANDATORY)
+
+**Before selecting any post topic, you MUST check the existing published posts and avoid duplicates.**
+
+- Do NOT write a post on the same company + same event (e.g., "Netflix Q1 2026 Earnings" cannot be posted twice)
+- Do NOT write a post with a substantially similar title or thesis to an existing post
+- If a topic has already been covered, choose a different angle, different company, or different time period
+- The list of existing posts will be provided at runtime — treat it as a strict exclusion list
+
+**Rule:** If a proposed topic overlaps with any existing post title by more than 50% in subject matter, discard it and pick a different topic.
+
+---
+
 ## 1. E-E-A-T Writing Rules
 
 ### Experience
