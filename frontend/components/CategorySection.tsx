@@ -6,6 +6,7 @@
 import Link from 'next/link';
 import { Category, Post } from '@/lib/types';
 import { PostCard } from './PostCard';
+import { CATEGORIES } from '@/lib/constants';
 
 interface CategorySectionProps {
   category: Category;
@@ -15,12 +16,14 @@ interface CategorySectionProps {
 export function CategorySection({ category, posts }: CategorySectionProps) {
   if (posts.length === 0) return null;
 
+  const categoryName = CATEGORIES.find(c => c.slug === category.slug)?.name ?? category.name_en ?? category.name_ko;
+
   return (
     <section className="py-12 border-t border-gray-200 dark:border-gray-800">
       <div className="mb-8">
         <Link href={`/${category.slug}`}>
           <h2 className="text-2xl font-bold mb-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-            {category.name_ko}
+            {categoryName}
           </h2>
         </Link>
         {category.description && (
@@ -35,7 +38,7 @@ export function CategorySection({ category, posts }: CategorySectionProps) {
       </div>
 
       <Link href={`/${category.slug}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
-        View all {category.name_en || category.name_ko} →
+        View all {categoryName} →
       </Link>
     </section>
   );

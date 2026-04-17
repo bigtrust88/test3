@@ -7,6 +7,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Post } from '@/lib/types';
 import { Badge } from './ui/Badge';
+import { CATEGORIES } from '@/lib/constants';
 import clsx from 'clsx';
 
 interface PostCardProps {
@@ -16,11 +17,15 @@ interface PostCardProps {
 
 export const PostCard = React.forwardRef<HTMLDivElement, PostCardProps>(
   ({ post, featured = false }, ref) => {
-    const publishDate = new Date(post.published_at).toLocaleDateString('ko-KR', {
+    const publishDate = new Date(post.published_at).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
     });
+
+    const categoryName = post.category
+      ? (CATEGORIES.find(c => c.slug === post.category?.slug)?.name ?? post.category.name_ko)
+      : null;
 
     return (
       <Link href={`/post/${post.slug}`}>
@@ -59,10 +64,10 @@ export const PostCard = React.forwardRef<HTMLDivElement, PostCardProps>(
           {/* 내용 */}
           <div className="p-4">
             {/* 카테고리 */}
-            {post.category?.name_ko && (
+            {categoryName && (
               <div className="mb-3">
                 <Badge variant="primary" size="sm">
-                  {post.category.name_ko}
+                  {categoryName}
                 </Badge>
               </div>
             )}
