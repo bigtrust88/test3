@@ -81,6 +81,8 @@ function downloadImage(url) {
 
 // ── 1. 로그인 → 토큰 발급 ─────────────────────────────────────────────
 async function login() {
+  console.log(`  📧 시도 이메일: ${EMAIL}`);
+  console.log(`  🔑 비밀번호 길이: ${PASSWORD ? PASSWORD.length : 0}자`);
   const body = JSON.stringify({ email: EMAIL, password: PASSWORD });
   const result = await apiRequest({
     hostname: API_HOST,
