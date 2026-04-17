@@ -122,6 +122,37 @@ async function getTags(token) {
   return map;
 }
 
+// ── slug에서 photo_category 역추적 ──────────────────────────────────
+function inferPhotoCategory(slug) {
+  if (/goldman|jpmorgan|wells|citi|morgan-stanley|bank/.test(slug)) return 'bank';
+  if (/netflix|streaming|disney|spotify/.test(slug)) return 'streaming';
+  if (/nvidia|gpu|b200|h100/.test(slug)) return 'gpu';
+  if (/tsmc|tsm|broadcom|amd|intel|qualcomm|smh/.test(slug)) return 'semiconductor';
+  if (/semiconductor|chip/.test(slug)) return 'semiconductor';
+  if (/datacenter|data-center|aws|azure/.test(slug)) return 'datacenter';
+  if (/tesla|ev|electric-vehicle/.test(slug)) return 'electric-vehicle';
+  if (/biotech|pharma|drug/.test(slug)) return 'biotech';
+  if (/energy|oil|solar|wind/.test(slug)) return 'energy';
+  if (/retail|amazon|walmart|consumer/.test(slug)) return 'retail';
+  if (/cloud|saas|software/.test(slug)) return 'cloud';
+  if (/sp500|s-p-500|market|premarket|briefing|earnings-season/.test(slug)) return 'technology';
+  return 'finance';
+}
+
+// ── photo 사용 분포 분석 → 덜 쓰인 photo_category 우선순위 계산 ────────
+function analyzePhotoUsage(existingPosts) {
+  const ALL_PHOTOS = Object.keys(PHOTO_MAP);
+  const counts = {};
+  ALL_PHOTOS.forEach(p => { counts[p] = 0; });
+  existingPosts.forEach(post => {
+    const cat = inferPhotoCategory(post.slug);
+    if (counts[cat] !== undefined) counts[cat]++;
+  });
+  // 사용 횟수 오름차순 정렬 (적게 쓰인 사진이 앞)
+  const ranked = ALL_PHOTOS.sort((a, b) => counts[a] - counts[b]);
+  return { counts, prioritized: ranked };
+}
+
 // ── 카테고리 분포 분석 → 부족한 카테고리 우선 순위 계산 ───────────────
 function analyzeCategoryBalance(existingPosts) {
   const ALL_CATEGORIES = ['earnings', 'stock-analysis', 'investment-strategy', 'market-trend', 'etf-analysis'];
@@ -153,6 +184,19 @@ async function generateTopics(today, existingPosts) {
 
   console.log(`  📊 카테고리 분포:\n${categoryStats}`);
   console.log(`  🎯 우선순위 카테고리: ${topPriority}`);
+
+  // photo 사용 분포 분석
+  const { counts: photoCounts, prioritized: photoPriority } = analyzePhotoUsage(existingPosts);
+  const photoStats = Object.entries(photoCounts)
+    .sort((a, b) => a[1] - b[1])
+    .map(([cat, n]) => `  - ${cat}: ${n} uses`)
+    .join('\n');
+  const unusedPhotos = photoPriority.filter(p => photoCounts[p] === 0);
+  const leastUsedPhotos = photoPriority.slice(0, 5).join(', ');
+
+  console.log(`  🖼️  Photo 사용 분포:\n${photoStats}`);
+  console.log(`  🎯 미사용 Photo: ${unusedPhotos.join(', ') || '없음 (전부 사용됨)'}`);
+  console.log(`  🎯 우선 Photo: ${leastUsedPhotos}`);
 
   const msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -200,11 +244,21 @@ Return ONLY a JSON array (no markdown, no explanation) with exactly 3 objects, e
   "body_photo_category": "semiconductor|gpu|datacenter|finance|bank|streaming|technology|electric-vehicle|biotech|energy|retail|cloud"
 }
 
+PHOTO USAGE ACROSS ALL EXISTING POSTS:
+${photoStats}
+
+PHOTO PRIORITY (least used first — prefer these):
+${leastUsedPhotos}
+
+${unusedPhotos.length > 0 ? `UNUSED PHOTOS (use these first): ${unusedPhotos.join(', ')}` : 'All photo categories have been used at least once — pick the least-used ones above.'}
+
 THUMBNAIL RULES (from THUMBNAIL_GENERATION-8.md):
 - thumbnail_headline: max 44 chars
 - thumbnail_subtext: max 30 chars
 - photo_category must NOT use declining/downward chart images
-- Each post must use a DIFFERENT photo_category (no duplicates within same run)
+- Each of the 3 topics MUST use a DIFFERENT photo_category
+- MUST prioritize photo categories from the "least used" list above
+- Do NOT reuse the most frequently used photo categories if alternatives exist
 - sentiment glow: bullish=#10B981, bearish=#EF4444, neutral=#3B82F6
 
 Available tags (use exact names): NVIDIA, TSMC, semiconductors, AI semiconductors, AMD, Netflix, Goldman Sachs, banks, Tesla, Q1 2026, earnings, earnings season, S&P 500, SMH, ETF, streaming`
