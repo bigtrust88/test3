@@ -126,11 +126,18 @@ async function getTags(token) {
 }
 
 // ── content_md에서 이미 사용된 Unsplash photo ID 집계 ───────────────
+// 썸네일 배경: <!-- thumbnail_bg: ID --> 주석으로 기록됨
+// 본문 이미지: ![...](https://images.unsplash.com/photo-ID?...) 형식
 function getUsedPhotoIds(existingPosts) {
   const used = new Set();
   existingPosts.forEach(p => {
-    const matches = (p.content_md || '').matchAll(/photo-([\w-]+)\?/g);
-    for (const m of matches) used.add(m[1]);
+    const md = p.content_md || '';
+    // 썸네일 배경 photo ID (HTML 주석)
+    const bgMatches = md.matchAll(/<!--\s*thumbnail_bg:\s*([\w-]+)\s*-->/g);
+    for (const m of bgMatches) used.add(m[1]);
+    // 본문 이미지 photo ID (Unsplash URL)
+    const bodyMatches = md.matchAll(/photo-([\w-]+)\?/g);
+    for (const m of bodyMatches) used.add(m[1]);
   });
   return used;
 }
@@ -469,7 +476,9 @@ async function run() {
       const bodyUrl = bodyPhoto.url;
 
       // 5. 본문 생성
-      const content_md = await generateContent(topic, today, bodyUrl);
+      let content_md = await generateContent(topic, today, bodyUrl);
+      // 썸네일 배경 photo ID를 content_md에 주석으로 기록 → 다음 실행에서 중복 방지에 활용
+      content_md = `<!-- thumbnail_bg: ${bgPhoto.id} -->\n` + content_md;
       const content_html = marked(content_md);
 
       // 6. Canvas 썸네일 합성
