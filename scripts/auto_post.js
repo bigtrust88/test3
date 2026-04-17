@@ -102,7 +102,7 @@ async function getExistingPosts(token) {
     headers: { Authorization: 'Bearer ' + token },
   });
   const list = res.data || [];
-  return list.map(p => ({ title: p.title, slug: p.slug }));
+  return list.map(p => ({ title: p.title, slug: p.slug, category_slug: p.category?.slug || '' }));
 }
 
 // ── 3. 카테고리 & 태그 조회 ──────────────────────────────────────────
@@ -122,13 +122,37 @@ async function getTags(token) {
   return map;
 }
 
+// ── 카테고리 분포 분석 → 부족한 카테고리 우선 순위 계산 ───────────────
+function analyzeCategoryBalance(existingPosts) {
+  const ALL_CATEGORIES = ['earnings', 'stock-analysis', 'investment-strategy', 'market-trend', 'etf-analysis'];
+  const counts = {};
+  ALL_CATEGORIES.forEach(c => { counts[c] = 0; });
+  existingPosts.forEach(p => {
+    if (p.category_slug && counts[p.category_slug] !== undefined) counts[p.category_slug]++;
+  });
+  // 포스트 수 오름차순 정렬 (적은 카테고리가 앞)
+  const ranked = ALL_CATEGORIES.sort((a, b) => counts[a] - counts[b]);
+  return { counts, prioritized: ranked };
+}
+
 // ── 3. Claude — 오늘의 3개 주제 선정 ────────────────────────────────
 async function generateTopics(today, existingPosts) {
   console.log('  🤖 Claude에게 오늘의 주제 요청 중...');
 
   const existingList = existingPosts.length > 0
-    ? existingPosts.map((p, i) => `${i + 1}. ${p.title}`).join('\n')
+    ? existingPosts.map((p, i) => `${i + 1}. [${p.category_slug || 'unknown'}] ${p.title}`).join('\n')
     : '(없음)';
+
+  // 카테고리 분포 분석
+  const { counts, prioritized } = analyzeCategoryBalance(existingPosts);
+  const categoryStats = Object.entries(counts)
+    .sort((a, b) => a[1] - b[1])
+    .map(([slug, n]) => `  - ${slug}: ${n} posts`)
+    .join('\n');
+  const topPriority = prioritized.slice(0, 2).join(', ');
+
+  console.log(`  📊 카테고리 분포:\n${categoryStats}`);
+  console.log(`  🎯 우선순위 카테고리: ${topPriority}`);
 
   const msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -148,9 +172,18 @@ ${THUMBNAIL_GENERATION}`,
 EXISTING POSTS (MUST NOT DUPLICATE — strictly forbidden):
 ${existingList}
 
+CATEGORY DISTRIBUTION (current post counts):
+${categoryStats}
+
+PRIORITY CATEGORIES (fewest posts — must be used first): ${topPriority}
+
+CATEGORY BALANCE RULES (from POSTING_STANDARDS.md):
+- At least 2 of the 3 topics MUST come from the priority categories above
+- Do NOT add more posts to the most-populated category unless all others are covered
+- The goal is balanced coverage across all 5 categories over time
+
 Follow the POSTING_STANDARDS.md "Duplicate Post Prevention" rule above.
 Do NOT pick any topic that overlaps with the existing posts list above.
-Vary the categories (earnings, sector analysis, investment strategy, market trend).
 
 Return ONLY a JSON array (no markdown, no explanation) with exactly 3 objects, each having:
 {
@@ -171,6 +204,7 @@ THUMBNAIL RULES (from THUMBNAIL_GENERATION-8.md):
 - thumbnail_headline: max 44 chars
 - thumbnail_subtext: max 30 chars
 - photo_category must NOT use declining/downward chart images
+- Each post must use a DIFFERENT photo_category (no duplicates within same run)
 - sentiment glow: bullish=#10B981, bearish=#EF4444, neutral=#3B82F6
 
 Available tags (use exact names): NVIDIA, TSMC, semiconductors, AI semiconductors, AMD, Netflix, Goldman Sachs, banks, Tesla, Q1 2026, earnings, earnings season, S&P 500, SMH, ETF, streaming`

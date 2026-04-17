@@ -32,6 +32,32 @@ Google AdSense permits AI-generated content provided it demonstrates **Experienc
 
 ---
 
+## Category Balance (MANDATORY)
+
+**Before selecting topics, analyze the category distribution of existing posts and prioritize underrepresented categories.**
+
+Available categories and their slugs:
+| Category | Slug |
+|----------|------|
+| Stock Analysis | `stock-analysis` |
+| Market Trend | `market-trend` |
+| Earnings | `earnings` |
+| ETF Analysis | `etf-analysis` |
+| Investment Strategy | `investment-strategy` |
+
+**Rules:**
+1. Count how many posts exist in each category from the provided post list
+2. Rank categories from least to most posts
+3. The topic proposals **must prioritize** the 1–2 categories with the fewest posts
+4. If two categories are tied, alternate between them across runs
+5. Do NOT write another post in the most-populated category unless all others have been covered
+
+**Example:** If existing posts are 6 earnings, 4 stock-analysis, 2 market-trend, 1 etf-analysis, 1 investment-strategy → today's topics should come from `etf-analysis` and `investment-strategy` first.
+
+This ensures balanced, diversified content that covers all investor interests and improves SEO breadth.
+
+---
+
 ## 1. E-E-A-T Writing Rules
 
 ### Experience
