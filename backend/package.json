@@ -32,7 +32,6 @@
     "@nestjs/typeorm": "^10.0.0",
     "aws-sdk": "^2.1500.0",
     "bcryptjs": "^2.4.3",
-    "canvas": "^3.2.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "dompurify": "^3.0.0",
