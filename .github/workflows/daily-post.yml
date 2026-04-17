@@ -88,3 +88,17 @@ jobs:
           BIGTRUST_PASSWORD: ${{ secrets.BIGTRUST_PASSWORD }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: node scripts/auto_post.js
+
+      - name: Regenerate sitemap
+        env:
+          BIGTRUST_EMAIL:    ${{ secrets.BIGTRUST_EMAIL }}
+          BIGTRUST_PASSWORD: ${{ secrets.BIGTRUST_PASSWORD }}
+        run: node generate_sitemap.js
+
+      - name: Commit updated sitemap
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add frontend/public/sitemap.xml
+          git diff --cached --quiet && echo "사이트맵 변경 없음" || \
+            git commit -m "chore: update sitemap.xml [skip ci]" && git push
