@@ -33,6 +33,22 @@ export class PostEntity {
   @Column('varchar', { length: 255, nullable: true })
   cover_image_url: string;
 
+  // Thumbnail Metadata (Bannerbear API)
+  @Column('varchar', { length: 44, nullable: true })
+  thumbnail_headline: string;
+
+  @Column('varchar', { length: 30, nullable: true })
+  thumbnail_subtext: string;
+
+  @Column('enum', { enum: ['bullish', 'bearish', 'neutral'], nullable: true })
+  thumbnail_sentiment: string;
+
+  @Column('enum', { enum: ['morning', 'afternoon', 'evening'], nullable: true })
+  trigger_type: string;
+
+  @Column('json', { nullable: true })
+  highlight_keywords: string[];
+
   @Column('boolean', { default: false })
   is_published: boolean;
 

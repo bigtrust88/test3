@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as AWS from 'aws-sdk';
+import { createCanvas } from 'canvas';
 
 export interface ThumbnailInput {
   headline: string;
@@ -45,15 +46,44 @@ export class ThumbnailService {
     // 입력 검증
     this.validateInput(input);
 
-    // Canvas generation disabled (memory constraints)
-    const imageBuffer = Buffer.alloc(0);
+    try {
+      // Canvas 생성
+      const canvas = createCanvas(this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
+      const ctx = canvas.getContext('2d');
 
-    return {
-      imageBuffer,
-      imagePath: `thumbnails/${Date.now()}-${input.trigger_type}.png`,
-      width: this.CANVAS_WIDTH,
-      height: this.CANVAS_HEIGHT,
-    };
+      // 배경 그리기
+      this.drawBackground(ctx, input.sentiment, input.trigger_type);
+
+      // Badge 그리기
+      this.drawBadge(ctx, input.category_slug, input.trigger_type);
+
+      // 로고 그리기
+      this.drawLogo(ctx, input.trigger_type);
+
+      // 제목 그리기
+      this.drawHeadline(ctx, input.headline);
+
+      // 부제목 그리기
+      this.drawSubtext(ctx, input.subtext);
+
+      // 구분선 그리기
+      this.drawDivider(ctx);
+
+      // 푸터 (태그 + 날짜) 그리기
+      this.drawFooter(ctx, input.tags);
+
+      // PNG로 버퍼 변환
+      const imageBuffer = canvas.toBuffer('image/png');
+
+      return {
+        imageBuffer,
+        imagePath: `thumbnails/${Date.now()}-${input.trigger_type}.png`,
+        width: this.CANVAS_WIDTH,
+        height: this.CANVAS_HEIGHT,
+      };
+    } catch (error) {
+      throw new BadRequestException(`썸네일 생성 실패: ${error.message}`);
+    }
   }
 
   /**
