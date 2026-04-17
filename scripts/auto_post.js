@@ -9,6 +9,7 @@
 const https = require('https');
 const http = require('http');
 const fs = require('fs');
+const path = require('path');
 const { createCanvas, loadImage } = require('canvas');
 const FormData = require('form-data');
 const { marked } = require('marked');
@@ -27,6 +28,11 @@ const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 const API_HOST  = 'api.bigtrust.site';
 const CANVAS_W  = 1200;
 const CANVAS_H  = 630;
+
+// ── 포스팅 기준 문서 로드 (Claude 프롬프트에 주입) ─────────────────────
+const DOCS_DIR = path.join(__dirname, '..');
+const POSTING_STANDARDS    = fs.readFileSync(path.join(DOCS_DIR, 'POSTING_STANDARDS.md'), 'utf8');
+const THUMBNAIL_GENERATION = fs.readFileSync(path.join(DOCS_DIR, 'THUMBNAIL_GENERATION-8.md'), 'utf8');
 
 // ── 주제별 Unsplash 배경 이미지 (하락 차트 이미지 절대 사용 금지) ──────
 const PHOTO_MAP = {
@@ -112,12 +118,20 @@ async function generateTopics(today) {
   const msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 1500,
+    system: `You are the content strategist for USStockStory.com, a US stock investment blog.
+You must follow these posting standards at all times:
+
+--- POSTING_STANDARDS.md ---
+${POSTING_STANDARDS}
+
+--- THUMBNAIL_GENERATION-8.md ---
+${THUMBNAIL_GENERATION}`,
     messages: [{
       role: 'user',
       content: `Today is ${today}. Generate 3 distinct US stock investment blog post topics for USStockStory.com.
 
+Follow the POSTING_STANDARDS.md and THUMBNAIL_GENERATION-8.md guidelines above.
 Vary the categories (earnings, sector analysis, investment strategy, market trend).
-For April 2026, Q1 2026 earnings season is active — companies like Meta, Microsoft, Alphabet, Amazon, Intel report this week.
 
 Return ONLY a JSON array (no markdown, no explanation) with exactly 3 objects, each having:
 {
@@ -133,6 +147,12 @@ Return ONLY a JSON array (no markdown, no explanation) with exactly 3 objects, e
   "photo_category": "semiconductor|gpu|datacenter|finance|bank|streaming|technology|electric-vehicle|biotech|energy|retail|cloud",
   "body_photo_category": "semiconductor|gpu|datacenter|finance|bank|streaming|technology|electric-vehicle|biotech|energy|retail|cloud"
 }
+
+THUMBNAIL RULES (from THUMBNAIL_GENERATION-8.md):
+- thumbnail_headline: max 44 chars
+- thumbnail_subtext: max 30 chars
+- photo_category must NOT use declining/downward chart images
+- sentiment glow: bullish=#10B981, bearish=#EF4444, neutral=#3B82F6
 
 Available tags (use exact names): NVIDIA, TSMC, semiconductors, AI semiconductors, AMD, Netflix, Goldman Sachs, banks, Tesla, Q1 2026, earnings, earnings season, S&P 500, SMH, ETF, streaming`
     }]
@@ -150,9 +170,14 @@ async function generateContent(topic, today, bodyImageUrl) {
   const msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 4000,
+    system: `You are an expert US stock investment analyst writing for USStockStory.com.
+You must follow these standards exactly:
+
+--- POSTING_STANDARDS.md ---
+${POSTING_STANDARDS}`,
     messages: [{
       role: 'user',
-      content: `Write a US stock investment blog post in English following these standards exactly:
+      content: `Write a US stock investment blog post strictly following POSTING_STANDARDS.md above.
 
 POST DETAILS:
 - Title: ${topic.title}
@@ -160,29 +185,30 @@ POST DETAILS:
 - Sentiment: ${topic.sentiment}
 - Category: ${topic.category_slug}
 
-REQUIRED STRUCTURE (write in this exact order):
+REQUIRED STRUCTURE (Section 6 of POSTING_STANDARDS.md):
 1. ## Overview — 2-3 sentences with specific figures. End with: *Sources: [Source1], [Source2]*
-2. --- separator
-3. ## Key Metrics (as of ${today}) — markdown table with 6-8 rows (Metric | Value | YoY Change or vs. Estimate)
-4. --- separator
-5. ## [Analysis Section 1 — relevant subheading] — 200-300 words explaining WHY numbers matter
-6. Then insert EXACTLY this image on its own line: ![${topic.title} analysis and market data](${bodyImageUrl})
-7. --- separator
-8. ## [Analysis Section 2 — Forward Outlook] — 200-300 words on guidance, analyst expectations
-9. --- separator
-10. ## Risk Factors — 3 bullet points, each with bold label
-11. --- separator
-12. ## Investment Outlook — 100-150 words, balanced, no certainty claims
+2. ---
+3. ## Key Metrics (as of ${today}) — markdown table, 6-8 rows
+4. ---
+5. ## [Analysis Section 1] — 200-300 words explaining WHY the numbers matter
+6. Insert EXACTLY this image on its own line:
+   ![${topic.title} — market analysis and key data](${bodyImageUrl})
+7. ---
+8. ## [Analysis Section 2 — Forward Outlook] — 200-300 words
+9. ---
+10. ## Risk Factors — 3 bullet points with bold labels
+11. ---
+12. ## Investment Outlook — 100-150 words, balanced conclusion
 13. > **Disclaimer**: This content is for informational purposes only and was produced with AI assistance. It does not constitute financial advice. All investment decisions carry risk and are solely your own responsibility. Past performance is not indicative of future results.
 
-RULES:
-- 1000-1500 words total
-- Cite at least 2 named sources (FactSet, Bloomberg, company IR, CNBC, Reuters, Morgan Stanley, etc.)
-- Every number must have a stated date
+E-E-A-T CHECKLIST (mandatory):
+- Cite at least 2 named sources (FactSet, Bloomberg, company IR, CNBC, Reuters, Morgan Stanley)
+- Every number tied to a specific date
 - Use "suggests," "indicates," "analysts expect" — never "will" or "guaranteed"
-- English ONLY — no Korean
+- 1000-1500 words total
+- English ONLY
 
-Return ONLY the markdown content. No title heading. Start with ## Overview.`
+Return ONLY the markdown. No title heading. Start directly with ## Overview.`
     }]
   });
 
