@@ -1,0 +1,66 @@
+##############################################################################
+# USStockStory — 매일 17:00 KST 자동 포스팅 (2개)
+# 전체 시스템 문서: AUTO_POSTING_SYSTEM.md
+##############################################################################
+#
+# 09:00 KST (daily-post.yml) 와 동일한 조건, POST_COUNT=2
+# 17:00 KST = 08:00 UTC
+##############################################################################
+
+name: Afternoon US Stock Post (5PM KST)
+
+on:
+  schedule:
+    - cron: '0 8 * * *'   # 매일 08:00 UTC = 한국시간 17:00 KST
+  workflow_dispatch:        # GitHub UI에서 수동 실행 가능
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install canvas system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            build-essential \
+            libcairo2-dev \
+            libpango1.0-dev \
+            libjpeg-dev \
+            libgif-dev \
+            librsvg2-dev
+
+      - name: Install Node.js dependencies
+        run: npm install
+
+      - name: Run afternoon post script (2 posts)
+        env:
+          BIGTRUST_EMAIL:    ${{ secrets.BIGTRUST_EMAIL }}
+          BIGTRUST_PASSWORD: ${{ secrets.BIGTRUST_PASSWORD }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          POST_COUNT: '2'
+        run: node scripts/auto_post.js
+
+      - name: Regenerate sitemap
+        env:
+          BIGTRUST_EMAIL:    ${{ secrets.BIGTRUST_EMAIL }}
+          BIGTRUST_PASSWORD: ${{ secrets.BIGTRUST_PASSWORD }}
+        run: node generate_sitemap.js
+
+      - name: Commit updated sitemap
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add frontend/public/sitemap.xml
+          git diff --cached --quiet && echo "사이트맵 변경 없음" || \
+            git commit -m "chore: update sitemap.xml [skip ci]" && git push
