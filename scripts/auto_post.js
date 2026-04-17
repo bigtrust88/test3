@@ -450,13 +450,15 @@ async function run() {
   const categoryMap = await getCategories(token);
   const tagMap      = await getTags(token);
 
-  // 4. 오늘의 주제 3개 선정 (기존 포스팅 제외)
+  // 4. 오늘의 주제 선정 (POST_COUNT 환경변수로 개수 조정 가능, 기본 3)
+  const POST_COUNT = parseInt(process.env.POST_COUNT || '3', 10);
   const topics = await generateTopics(today, existingPosts);
-  console.log(`  ✅ 주제 ${topics.length}개 선정 완료`);
+  const selectedTopics = topics.slice(0, POST_COUNT);
+  console.log(`  ✅ 주제 ${selectedTopics.length}개 선정 완료`);
 
   let successCount = 0;
 
-  for (const [i, topic] of topics.entries()) {
+  for (const [i, topic] of selectedTopics.entries()) {
     console.log(`\n── [${i+1}/3] ${topic.title}`);
 
     try {
@@ -515,8 +517,8 @@ async function run() {
     }
   }
 
-  console.log(`\n🎉 완료: ${successCount}/3 포스팅 성공`);
-  if (successCount < topics.length) process.exit(1); // CI 실패 표시
+  console.log(`\n🎉 완료: ${successCount}/${selectedTopics.length} 포스팅 성공`);
+  if (successCount < selectedTopics.length) process.exit(1); // CI 실패 표시
 }
 
 run().catch(e => { console.error(e); process.exit(1); });
