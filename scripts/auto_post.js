@@ -102,7 +102,7 @@ async function getExistingPosts(token) {
     headers: { Authorization: 'Bearer ' + token },
   });
   const list = res.data || [];
-  return list.map(p => ({ title: p.title, slug: p.slug, category_slug: p.category?.slug || '' }));
+  return list.map(p => ({ title: p.title, slug: p.slug, category_slug: p.category?.slug || '', content_md: p.content_md || '' }));
 }
 
 // ── 3. 카테고리 & 태그 조회 ──────────────────────────────────────────
@@ -122,35 +122,32 @@ async function getTags(token) {
   return map;
 }
 
-// ── slug에서 photo_category 역추적 ──────────────────────────────────
-function inferPhotoCategory(slug) {
-  if (/goldman|jpmorgan|wells|citi|morgan-stanley|bank/.test(slug)) return 'bank';
-  if (/netflix|streaming|disney|spotify/.test(slug)) return 'streaming';
-  if (/nvidia|gpu|b200|h100/.test(slug)) return 'gpu';
-  if (/tsmc|tsm|broadcom|amd|intel|qualcomm|smh/.test(slug)) return 'semiconductor';
-  if (/semiconductor|chip/.test(slug)) return 'semiconductor';
-  if (/datacenter|data-center|aws|azure/.test(slug)) return 'datacenter';
-  if (/tesla|ev|electric-vehicle/.test(slug)) return 'electric-vehicle';
-  if (/biotech|pharma|drug/.test(slug)) return 'biotech';
-  if (/energy|oil|solar|wind/.test(slug)) return 'energy';
-  if (/retail|amazon|walmart|consumer/.test(slug)) return 'retail';
-  if (/cloud|saas|software/.test(slug)) return 'cloud';
-  if (/sp500|s-p-500|market|premarket|briefing|earnings-season/.test(slug)) return 'technology';
-  return 'finance';
+// ── 기존 포스트에서 사용된 Unsplash photo URL 집계 ──────────────────
+// content_md에서 Unsplash URL을 추출해 이미 쓰인 사진 ID 목록 반환
+function usedPhotoUrls(existingPosts) {
+  const used = new Set();
+  existingPosts.forEach(p => {
+    // cover_image_url은 R2 URL이라 추적 불가 → PHOTO_MAP 순환 사용으로 커버
+    // body image URL은 content_md에서 추출 가능
+    const matches = (p.content_md || '').matchAll(/photo-([\w-]+)\?/g);
+    for (const m of matches) used.add(m[1]);
+  });
+  return used;
 }
 
-// ── photo 사용 분포 분석 → 덜 쓰인 photo_category 우선순위 계산 ────────
-function analyzePhotoUsage(existingPosts) {
-  const ALL_PHOTOS = Object.keys(PHOTO_MAP);
-  const counts = {};
-  ALL_PHOTOS.forEach(p => { counts[p] = 0; });
-  existingPosts.forEach(post => {
-    const cat = inferPhotoCategory(post.slug);
-    if (counts[cat] !== undefined) counts[cat]++;
+// ── PHOTO_MAP에서 아직 안 쓴 사진 순서대로 N개 반환 ────────────────────
+function pickUnusedPhotos(existingPosts, count) {
+  const used = usedPhotoUrls(existingPosts);
+  const all = Object.values(PHOTO_MAP);
+  // 미사용 먼저, 그 다음 나머지 (중복 없이)
+  const unused = all.filter(url => {
+    const id = url.match(/photo-([\w-]+)\?/)?.[1];
+    return id && !used.has(id);
   });
-  // 사용 횟수 오름차순 정렬 (적게 쓰인 사진이 앞)
-  const ranked = ALL_PHOTOS.sort((a, b) => counts[a] - counts[b]);
-  return { counts, prioritized: ranked };
+  const rest = all.filter(url => !unused.includes(url));
+  const pool = [...unused, ...rest];
+  // 이번 run에서 3개가 서로 다른 URL이 되도록 slice
+  return pool.slice(0, count);
 }
 
 // ── 카테고리 분포 분석 → 부족한 카테고리 우선 순위 계산 ───────────────
@@ -184,16 +181,6 @@ async function generateTopics(today, existingPosts) {
   console.log(`  📊 카테고리 분포:\n${categoryStats}`);
   console.log(`  🎯 우선순위 카테고리: ${topPriority}`);
 
-  // 기존 포스트에서 사용된 photo_category 집계 → 미사용/적게 쓰인 것부터 선택지 제공
-  const { counts: photoCounts, prioritized: photoPriority } = analyzePhotoUsage(existingPosts);
-  // 미사용 사진이 있으면 그것만, 없으면 가장 적게 쓰인 순으로 넉넉히 제공 (3개 고를 수 있도록 최소 6개)
-  const unusedPhotos = photoPriority.filter(p => photoCounts[p] === 0);
-  const availablePhotos = unusedPhotos.length >= 3
-    ? unusedPhotos
-    : photoPriority.slice(0, Math.max(6, unusedPhotos.length + 3));
-
-  console.log(`  🖼️  미사용 Photo: ${unusedPhotos.join(', ') || '없음'}`);
-  console.log(`  🎯 선택 가능 Photo (${availablePhotos.length}개): ${availablePhotos.join(', ')}`);
 
   const msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -241,9 +228,7 @@ Return ONLY a JSON array (no markdown, no explanation) with exactly 3 objects:
   "thumbnail_headline": "max 44 chars — punchy, specific number if possible",
   "thumbnail_subtext": "max 30 chars — key metric or supporting stat",
   "sentiment": "bullish|bearish|neutral",
-  "trigger_type": "morning",
-  "photo_category": "(must be from available list above)",
-  "body_photo_category": "(must be from available list above, can differ from photo_category)"
+  "trigger_type": "morning"
 }
 
 Available tags (use exact names): NVIDIA, TSMC, semiconductors, AI semiconductors, AMD, Netflix, Goldman Sachs, banks, Tesla, Q1 2026, earnings, earnings season, S&P 500, SMH, ETF, streaming`
@@ -454,7 +439,11 @@ async function run() {
 
   // 4. 오늘의 주제 3개 선정 (기존 포스팅 제외)
   const topics = await generateTopics(today, existingPosts);
-  console.log(`  ✅ 주제 ${topics.length}개 선정 완료\n`);
+  console.log(`  ✅ 주제 ${topics.length}개 선정 완료`);
+
+  // 5. 사진 배정 — 기존 포스트에서 안 쓴 사진 순서대로 (주제와 무관, 중복 방지)
+  const photoPool = pickUnusedPhotos(existingPosts, topics.length * 2);
+  console.log(`  🖼️  배정 사진 pool: ${photoPool.map(u => u.match(/photo-([\w-]+)\?/)?.[1]).join(', ')}\n`);
 
   let successCount = 0;
 
@@ -462,9 +451,9 @@ async function run() {
     console.log(`\n── [${i+1}/3] ${topic.title}`);
 
     try {
-      // 4. 배경 이미지 URL 결정
-      const bgUrl   = PHOTO_MAP[topic.photo_category]   || PHOTO_MAP.finance;
-      const bodyUrl = PHOTO_MAP[topic.body_photo_category] || PHOTO_MAP.technology;
+      // 사진 배정: 썸네일 배경 / 본문 이미지 각각 다른 사진
+      const bgUrl   = photoPool[i * 2]     || photoPool[i] || Object.values(PHOTO_MAP)[i];
+      const bodyUrl = photoPool[i * 2 + 1] || photoPool[i] || Object.values(PHOTO_MAP)[i + 1];
 
       // 5. 본문 생성
       const content_md = await generateContent(topic, today, bodyUrl);
