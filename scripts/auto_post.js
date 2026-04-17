@@ -39,7 +39,7 @@ const PHOTO_MAP = {
   semiconductor:   'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80&fm=jpg',
   gpu:             'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&q=80&fm=jpg',
   datacenter:      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&q=80&fm=jpg',
-  finance:         'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1200&q=80&fm=jpg',
+  finance:         'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=1200&q=80&fm=jpg',
   bank:            'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&q=80&fm=jpg',
   streaming:       'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=1200&q=80&fm=jpg',
   technology:      'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&q=80&fm=jpg',
@@ -81,8 +81,6 @@ function downloadImage(url) {
 
 // ── 1. 로그인 → 토큰 발급 ─────────────────────────────────────────────
 async function login() {
-  console.log(`  📧 시도 이메일: ${EMAIL}`);
-  console.log(`  🔑 비밀번호 길이: ${PASSWORD ? PASSWORD.length : 0}자`);
   const body = JSON.stringify({ email: EMAIL, password: PASSWORD });
   const result = await apiRequest({
     hostname: API_HOST,
