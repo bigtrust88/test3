@@ -34,21 +34,24 @@ const DOCS_DIR = path.join(__dirname, '..');
 const POSTING_STANDARDS    = fs.readFileSync(path.join(DOCS_DIR, 'POSTING_STANDARDS.md'), 'utf8');
 const THUMBNAIL_GENERATION = fs.readFileSync(path.join(DOCS_DIR, 'THUMBNAIL_GENERATION-8.md'), 'utf8');
 
-// ── 주제별 Unsplash 배경 이미지 (하락 차트 이미지 절대 사용 금지) ──────
-const PHOTO_MAP = {
-  semiconductor:   'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80&fm=jpg',
-  gpu:             'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&q=80&fm=jpg',
-  datacenter:      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&q=80&fm=jpg',
-  finance:         'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=1200&q=80&fm=jpg',
-  bank:            'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&q=80&fm=jpg',
-  streaming:       'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=1200&q=80&fm=jpg',
-  technology:      'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&q=80&fm=jpg',
-  'electric-vehicle': 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=1200&q=80&fm=jpg',
-  biotech:         'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1200&q=80&fm=jpg',
-  energy:          'https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=1200&q=80&fm=jpg',
-  retail:          'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80&fm=jpg',
-  cloud:           'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=1200&q=80&fm=jpg',
-};
+// ── Unsplash 사진 목록 (id, url, 설명) — 하락 차트 절대 사용 금지 ──────
+const PHOTOS = [
+  { id: '1518770660439-4636190af475', desc: 'circuit board / semiconductor chip',         url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80&fm=jpg' },
+  { id: '1526374965328-7f61d4dc18c5', desc: 'GPU / graphics card / AI hardware',          url: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&q=80&fm=jpg' },
+  { id: '1558494949-ef010cbdcc31',    desc: 'server rack / data center / cloud',           url: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&q=80&fm=jpg' },
+  { id: '1590283603385-17ffb3a7f29f', desc: 'upward stock chart / green market gains',    url: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=1200&q=80&fm=jpg' },
+  { id: '1486406146926-c627a92ad1ab', desc: 'bank building / financial institution',       url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&q=80&fm=jpg' },
+  { id: '1522869635100-9f4c5e86aa37', desc: 'streaming / entertainment / media screen',   url: 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=1200&q=80&fm=jpg' },
+  { id: '1581091226825-a6a2a5aee158', desc: 'laptop / technology / software',              url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&q=80&fm=jpg' },
+  { id: '1593941707882-a5bba14938c7', desc: 'electric vehicle / EV / Tesla',               url: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=1200&q=80&fm=jpg' },
+  { id: '1532187863486-abf9dbad1b69', desc: 'biotech / laboratory / pharmaceutical',       url: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1200&q=80&fm=jpg' },
+  { id: '1466611653911-95081537e5b7', desc: 'energy / solar / wind / oil',                 url: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=1200&q=80&fm=jpg' },
+  { id: '1441986300917-64674bd600d8', desc: 'retail / shopping / consumer goods',          url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80&fm=jpg' },
+  { id: '1544197150-b99a580bb7a8',    desc: 'cloud computing / internet / SaaS',           url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=1200&q=80&fm=jpg' },
+];
+
+// 하위 호환용 (composeThumbnail 등에서 url 조회 시 사용)
+const PHOTO_MAP = Object.fromEntries(PHOTOS.map(p => [p.id, p.url]));
 
 // ── HTTP 헬퍼 ──────────────────────────────────────────────────────────
 function apiRequest(options, body) {
@@ -122,32 +125,23 @@ async function getTags(token) {
   return map;
 }
 
-// ── 기존 포스트에서 사용된 Unsplash photo URL 집계 ──────────────────
-// content_md에서 Unsplash URL을 추출해 이미 쓰인 사진 ID 목록 반환
-function usedPhotoUrls(existingPosts) {
+// ── content_md에서 이미 사용된 Unsplash photo ID 집계 ───────────────
+function getUsedPhotoIds(existingPosts) {
   const used = new Set();
   existingPosts.forEach(p => {
-    // cover_image_url은 R2 URL이라 추적 불가 → PHOTO_MAP 순환 사용으로 커버
-    // body image URL은 content_md에서 추출 가능
     const matches = (p.content_md || '').matchAll(/photo-([\w-]+)\?/g);
     for (const m of matches) used.add(m[1]);
   });
   return used;
 }
 
-// ── PHOTO_MAP에서 아직 안 쓴 사진 순서대로 N개 반환 ────────────────────
-function pickUnusedPhotos(existingPosts, count) {
-  const used = usedPhotoUrls(existingPosts);
-  const all = Object.values(PHOTO_MAP);
-  // 미사용 먼저, 그 다음 나머지 (중복 없이)
-  const unused = all.filter(url => {
-    const id = url.match(/photo-([\w-]+)\?/)?.[1];
-    return id && !used.has(id);
-  });
-  const rest = all.filter(url => !unused.includes(url));
-  const pool = [...unused, ...rest];
-  // 이번 run에서 3개가 서로 다른 URL이 되도록 slice
-  return pool.slice(0, count);
+// ── 미사용 사진 목록 반환 (미사용 먼저, 이미 쓴 건 뒤로) ──────────────
+function getAvailablePhotos(existingPosts) {
+  const used = getUsedPhotoIds(existingPosts);
+  const unused = PHOTOS.filter(p => !used.has(p.id));
+  const usedList = PHOTOS.filter(p => used.has(p.id));
+  // 미사용 사진이 충분하면 미사용만, 부족하면 사용된 것도 뒤에 추가
+  return [...unused, ...usedList];
 }
 
 // ── 카테고리 분포 분석 → 부족한 카테고리 우선 순위 계산 ───────────────
@@ -180,6 +174,14 @@ async function generateTopics(today, existingPosts) {
 
   console.log(`  📊 카테고리 분포:\n${categoryStats}`);
   console.log(`  🎯 우선순위 카테고리: ${topPriority}`);
+
+  // 미사용 사진 목록 (미사용 먼저, 중복 방지)
+  const availablePhotos = getAvailablePhotos(existingPosts);
+  const unusedCount = availablePhotos.filter(p => !getUsedPhotoIds(existingPosts).has(p.id)).length;
+  const photoOptions = availablePhotos.slice(0, Math.max(8, unusedCount))
+    .map(p => `  - id: "${p.id}" — ${p.desc}`)
+    .join('\n');
+  console.log(`  🖼️  사용 가능 사진 ${availablePhotos.length}개 (미사용 ${unusedCount}개)`);
 
 
   const msg = await anthropic.messages.create({
@@ -218,6 +220,15 @@ PHOTO RULES:
 - Choose the photo_category that best fits the post topic/concept from the available options
 - Do NOT use any photo_category not listed in the available list above
 
+AVAILABLE PHOTOS (choose ONLY from this list — unused photos are listed first):
+${photoOptions}
+
+PHOTO RULES:
+- bg_photo_id: pick the photo whose description best matches the post topic
+- body_photo_id: pick a DIFFERENT photo that also fits the post topic
+- All 3 posts must use different bg_photo_ids
+- MUST pick from the list above — do not invent photo IDs
+
 Return ONLY a JSON array (no markdown, no explanation) with exactly 3 objects:
 {
   "title": "SEO title under 60 chars with ticker symbol",
@@ -228,7 +239,9 @@ Return ONLY a JSON array (no markdown, no explanation) with exactly 3 objects:
   "thumbnail_headline": "max 44 chars — punchy, specific number if possible",
   "thumbnail_subtext": "max 30 chars — key metric or supporting stat",
   "sentiment": "bullish|bearish|neutral",
-  "trigger_type": "morning"
+  "trigger_type": "morning",
+  "bg_photo_id": "unsplash-photo-id-from-list-above",
+  "body_photo_id": "different-unsplash-photo-id-from-list-above"
 }
 
 Available tags (use exact names): NVIDIA, TSMC, semiconductors, AI semiconductors, AMD, Netflix, Goldman Sachs, banks, Tesla, Q1 2026, earnings, earnings season, S&P 500, SMH, ETF, streaming`
@@ -441,19 +454,17 @@ async function run() {
   const topics = await generateTopics(today, existingPosts);
   console.log(`  ✅ 주제 ${topics.length}개 선정 완료`);
 
-  // 5. 사진 배정 — 기존 포스트에서 안 쓴 사진 순서대로 (주제와 무관, 중복 방지)
-  const photoPool = pickUnusedPhotos(existingPosts, topics.length * 2);
-  console.log(`  🖼️  배정 사진 pool: ${photoPool.map(u => u.match(/photo-([\w-]+)\?/)?.[1]).join(', ')}\n`);
-
   let successCount = 0;
 
   for (const [i, topic] of topics.entries()) {
     console.log(`\n── [${i+1}/3] ${topic.title}`);
 
     try {
-      // 사진 배정: 썸네일 배경 / 본문 이미지 각각 다른 사진
-      const bgUrl   = photoPool[i * 2]     || photoPool[i] || Object.values(PHOTO_MAP)[i];
-      const bodyUrl = photoPool[i * 2 + 1] || photoPool[i] || Object.values(PHOTO_MAP)[i + 1];
+      // 사진은 generateTopics에서 Claude가 선택한 photo_id로 배정
+      const bgPhoto   = PHOTOS.find(p => p.id === topic.bg_photo_id)   || PHOTOS[i];
+      const bodyPhoto = PHOTOS.find(p => p.id === topic.body_photo_id) || PHOTOS[i + 1] || PHOTOS[i];
+      const bgUrl   = bgPhoto.url;
+      const bodyUrl = bodyPhoto.url;
 
       // 5. 본문 생성
       const content_md = await generateContent(topic, today, bodyUrl);
